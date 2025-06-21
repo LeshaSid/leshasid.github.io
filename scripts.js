@@ -17,6 +17,7 @@ const gamesCompleted = {
   cards: false,
   detective: false
 };
+const BOX_CODES = ["1984", "LAMP", "TOWE", "FINA"];
 
 // ================== НАВИГАЦИЯ ==================
 function startGames() {
@@ -101,7 +102,7 @@ function showBoxAnimation(boxNumber) {
   boxAnim.style.animation = 'none';
   void boxAnim.offsetWidth;
   boxAnim.style.animation = 'openBox 1.5s ease';
-  playSound('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
+  playSound('notify.wav');
   
   setTimeout(() => {
     boxAnim.style.display = 'none';
@@ -123,7 +124,7 @@ function showFinalAnimation() {
   if (finalAnim) {
     finalAnim.style.display = 'flex';
     finalAnim.classList.add('show');
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
+    playSound('notify.wav');
   }
 }
 
@@ -139,13 +140,21 @@ function closeFinalAnimation() {
 const memoryGameGrid = document.getElementById('memoryGameGrid');
 const memoryFeedback = document.getElementById('memoryFeedback');
 const memoryStartBtn = document.getElementById('memoryStartBtn');
+const memoryDifficulty = document.getElementById('memoryDifficulty');
 
 let sequence = [];
 let userSequence = [];
 let memoryLevel = 1;
 let isPlayingSequence = false;
 let canClick = false;
-const MAX_LEVEL = 3; // Уменьшено для тестирования
+let maxLevel = 5; // По умолчанию средняя сложность
+
+const DIFFICULTY_LEVELS = {
+  easy: { levels: 3, flash: 1000, pause: 500 },
+  medium: { levels: 5, flash: 800, pause: 400 },
+  hard: { levels: 7, flash: 600, pause: 300 },
+  expert: { levels: 10, flash: 400, pause: 200 }
+};
 
 function createMemoryGrid() {
   if (!memoryGameGrid) return;
@@ -181,8 +190,10 @@ async function playSequence() {
   canClick = false;
   if (memoryFeedback) memoryFeedback.textContent = 'Запоминай последовательность...';
   
-  const flashDuration = memoryLevel > 4 ? 600 : memoryLevel > 2 ? 800 : 1000;
-  const pauseDuration = memoryLevel > 4 ? 200 : memoryLevel > 2 ? 300 : 400;
+  const difficulty = memoryDifficulty.value;
+  const settings = DIFFICULTY_LEVELS[difficulty];
+  const flashDuration = settings.flash - (memoryLevel * 50);
+  const pauseDuration = settings.pause - (memoryLevel * 20);
   
   for (const idx of sequence) {
     await flashCell(idx, flashDuration);
@@ -203,7 +214,7 @@ function flashCell(index, duration) {
     
     const cell = memoryGameGrid.children[index];
     cell.classList.add('active');
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
+    playSound('notify.wav');
     
     setTimeout(() => {
       cell.classList.remove('active');
@@ -213,7 +224,7 @@ function flashCell(index, duration) {
 }
 
 function handleMemoryClick(i, cell) {
-  playSound('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
+  playSound('notify.wav');
   userSequence.push(i);
   cell.classList.add('active');
   
@@ -237,7 +248,7 @@ function checkUserSequence() {
   }
   
   if (userSequence.length === sequence.length) {
-    if (memoryLevel >= MAX_LEVEL) {
+    if (memoryLevel >= maxLevel) {
       if (memoryFeedback) {
         memoryFeedback.textContent = 'Поздравляю! Ты прошёл Лабиринт памяти!';
         memoryFeedback.style.color = '#4caf50';
@@ -259,7 +270,14 @@ function checkUserSequence() {
 function startMemoryRound() {
   if (memoryStartBtn) memoryStartBtn.disabled = true;
   userSequence = [];
-  sequence.push(Math.floor(Math.random() * 9));
+  
+  // Выбираем уникальную позицию для новой лампы
+  let newPosition;
+  do {
+    newPosition = Math.floor(Math.random() * 9);
+  } while (sequence.length > 0 && sequence[sequence.length - 1] === newPosition);
+  
+  sequence.push(newPosition);
   setTimeout(() => playSequence(), 800);
 }
 
@@ -267,6 +285,9 @@ function resetMemoryGame() {
   sequence = [];
   userSequence = [];
   memoryLevel = 1;
+  const difficulty = memoryDifficulty.value;
+  maxLevel = DIFFICULTY_LEVELS[difficulty].levels;
+  
   if (memoryFeedback) {
     memoryFeedback.textContent = 'Нажми "Начать игру" для старта';
     memoryFeedback.style.color = '';
@@ -350,10 +371,14 @@ function checkQuizAnswer(answer) {
   const q = quizQuestions[currentQuiz];
   let correct = false;
   
-  if (q.inputAnswer) {
-    correct = answer === q.answer.toLowerCase();
+  if (location.search.includes('debug')) {
+    correct = true;
   } else {
-    correct = parseInt(answer) === q.answer;
+    if (q.inputAnswer) {
+      correct = answer === q.answer.toLowerCase();
+    } else {
+      correct = parseInt(answer) === q.answer;
+    }
   }
   
   if (quizFeedback) {
@@ -421,8 +446,9 @@ function startQuizTimer() {
 let collectedEvidence = [];
 let hintsUsed = 0;
 let currentEvidence = null;
-const EVIDENCE_COUNT = 5;
+const EVIDENCE_COUNT = 6;
 let selectedEvidence = null;
+let codeAttempts = 0;
 
 function examineEvidence(id) {
   if (!evidenceData[id]) return;
@@ -446,7 +472,7 @@ function examineEvidence(id) {
   
   const clueText = document.getElementById('clueText');
   if (clueText) clueText.innerHTML = clueHTML;
-  playSound('https://assets.mixkit.co/sfx/preview/mixkit-paper-flip-1101.mp3');
+  playSound('page-flipping.wav');
   
   const counter = document.querySelector('.hint-counter');
   if (counter) counter.textContent = `(${collectedEvidence.length}/${EVIDENCE_COUNT})`;
@@ -457,6 +483,9 @@ function examineEvidence(id) {
       detectiveFeedback.innerHTML = 
         "Все улики собраны! <button class='btn' onclick='startMatching()'>Сопоставить улики</button>";
     }
+    
+    // Показываем поле для ввода кода
+    document.getElementById('codeEntry').style.display = 'block';
   }
 }
 
@@ -516,21 +545,21 @@ function selectCard(card) {
     card.classList.add('matched');
     selectedEvidence.onclick = null;
     card.onclick = null;
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
+    playSound('notify.wav');
     
     const unmatchedCards = document.querySelectorAll('.matching-card:not(.matched)');
     if (unmatchedCards.length === 0) {
       const detectiveFeedback = document.getElementById('detectiveFeedback');
       if (detectiveFeedback) {
         detectiveFeedback.innerHTML = 
-          "Поздравляю! Ты раскрыл все связи! <button class='btn' onclick='showKeySelection()'>Выбрать ключ</button>";
+          "Поздравляю! Ты раскрыл все связи!";
       }
     }
   } else {
     selectedEvidence.classList.remove('selected');
     card.classList.add('incorrect');
     setTimeout(() => card.classList.remove('incorrect'), 1000);
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-game-show-wrong-answer-1992.mp3');
+    playSound('wronganswer.mp3');
   }
   
   selectedEvidence = null;
@@ -544,8 +573,50 @@ function showKeySelection() {
   if (keySelection) keySelection.style.display = 'block';
 }
 
+function checkDetectiveCode() {
+  const codeInput = document.getElementById('detectiveCode');
+  const codeFeedback = document.getElementById('codeFeedback');
+  
+  if (!codeInput || !codeFeedback) return;
+  
+  const enteredCode = codeInput.value.trim().toUpperCase();
+  const correctCode = BOX_CODES[3]; // Код из последней коробки
+  
+  if (location.search.includes('debug')) {
+    codeFeedback.textContent = "Режим отладки: код принят!";
+    codeFeedback.style.color = "#4caf50";
+    showKeySelection();
+    return;
+  }
+  
+  if (enteredCode === correctCode) {
+    codeFeedback.textContent = "Код верный! Шифровальный блок открыт.";
+    codeFeedback.style.color = "#4caf50";
+    playSound('notify.wav');
+    showKeySelection();
+  } else {
+    codeAttempts++;
+    if (codeAttempts >= 3) {
+      codeFeedback.textContent = "Слишком много попыток! Начните расследование заново.";
+      codeFeedback.style.color = "#f44336";
+      setTimeout(() => {
+        collectedEvidence = [];
+        document.querySelectorAll('.evidence-item').forEach(el => el.classList.remove('selected'));
+        document.getElementById('codeEntry').style.display = 'none';
+        document.getElementById('clueText').textContent = "Начни расследование, выбрав одну из улик.";
+        document.querySelector('.hint-counter').textContent = "(0/6)";
+        codeAttempts = 0;
+      }, 2000);
+    } else {
+      codeFeedback.textContent = `Неверный код! Попыток осталось: ${3 - codeAttempts}`;
+      codeFeedback.style.color = "#f44336";
+      playSound('wronganswer.mp3');
+    }
+  }
+}
+
 function solveDetective(key) {
-  playSound('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
+  playSound('notify.wav');
   
   const detectiveFeedback = document.getElementById('detectiveFeedback');
   if (!detectiveFeedback) return;
@@ -580,7 +651,7 @@ function showHint() {
   clueHTML += "</ul>";
   
   clueText.innerHTML = clueHTML;
-  playSound('https://assets.mixkit.co/sfx/preview/mixkit-paper-flip-1101.mp3');
+  playSound('page-flipping.wav');
 }
 
 // ================== ИНИЦИАЛИЗАЦИЯ ==================
@@ -589,8 +660,14 @@ document.addEventListener('DOMContentLoaded', () => {
   loadQuiz();
   createMemoryGrid();
   
+  // Активация режима отладки
   if (location.search.includes('debug')) {
     Object.keys(gamesCompleted).forEach(k => gamesCompleted[k] = true);
     console.log("Режим отладки активирован - все игры разблокированы");
+    
+    // Упрощаем игры в режиме отладки
+    if (memoryDifficulty) {
+      memoryDifficulty.value = 'easy';
+    }
   }
 });

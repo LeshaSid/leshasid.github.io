@@ -46,6 +46,15 @@
       <div id="memoryGameGrid" aria-label="Игровое поле памяти"></div>
       <p id="memoryFeedback" class="hint" role="alert"></p>
       <button id="memoryStartBtn" class="btn">Начать игру</button>
+      <div class="difficulty">
+        <label>Уровень сложности:</label>
+        <select id="memoryDifficulty">
+          <option value="easy">Легкий (3 уровня)</option>
+          <option value="medium">Средний (5 уровней)</option>
+          <option value="hard">Сложный (7 уровней)</option>
+          <option value="expert">Эксперт (10 уровней)</option>
+        </select>
+      </div>
     </div>
 
     <!-- Эйла и Далёкий Свет -->
@@ -62,7 +71,7 @@
       <p>Расследуй загадочное дело. Собери улики и найди правильный ключ!</p>
       
       <div class="clue">
-        <h3>Подсказки: <span class="hint-counter">(0/3)</span></h3>
+        <h3>Подсказки: <span class="hint-counter">(0/6)</span></h3>
         <div id="clueText">Начни расследование, выбрав одну из улик.</div>
       </div>
       
@@ -87,10 +96,21 @@
           <img src="https://via.placeholder.com/100?text=Дневник" alt="Дневник">
           <span>Дневник</span>
         </div>
+        <div class="evidence-item" data-id="6" onclick="examineEvidence(6)">
+          <img src="https://via.placeholder.com/100?text=Шифр" alt="Шифровальный блок">
+          <span>Шифровальный блок</span>
+        </div>
       </div>
       
       <div id="matchingGame">
         <!-- Контент для сопоставления будет добавлен динамически -->
+      </div>
+      
+      <div id="codeEntry" style="display:none; margin-top:20px; text-align:center">
+        <h3>Введите код с артефакта:</h3>
+        <input type="text" id="detectiveCode" maxlength="4" placeholder="4 символа">
+        <button class="btn" onclick="checkDetectiveCode()">Проверить</button>
+        <p id="codeFeedback" class="hint"></p>
       </div>
       
       <div id="keySelection" class="key-selection" style="display:none">
