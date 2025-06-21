@@ -1,0 +1,844 @@
+/* Общий ретро стиль */
+body {
+  background: #111 url('background.jpg') repeat;
+  color: #eee;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0; padding: 0;
+  user-select: none;
+  overflow-x: hidden;
+}
+h1, h2 {
+  text-align: center;
+  text-shadow:
+    0 0 5px #ff0,
+    0 0 10px #ff0,
+    0 0 20px #f80;
+}
+#container {
+  max-width: 900px;
+  margin: 20px auto 40px auto;
+  padding: 10px 15px;
+  background: #222a2a;
+  border: 4px double #ffcc33;
+  box-shadow:
+    0 0 10px #ffcc33,
+    inset 0 0 10px #663300;
+  border-radius: 10px;
+}
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+nav button {
+  background: #333;
+  color: #ffcc33;
+  border: 2px solid #ffcc33;
+  padding: 8px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  text-shadow: 0 0 5px #ffcc33;
+  transition: 0.3s;
+}
+nav button:hover {
+  background: #ffcc33;
+  color: #222;
+}
+nav button.active {
+  background: #ffcc33;
+  color: #222;
+  box-shadow: 0 0 15px #ffcc33;
+}
+.screen {
+  display: none;
+  animation: fadeIn 0.7s ease forwards;
+}
+.screen.active {
+  display: block;
+}
+.btn {
+  background: #ffcc33;
+  border: none;
+  color: #222;
+  padding: 10px 20px;
+  font-weight: bold;
+  margin-top: 15px;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow:
+    0 0 8px #ffcc33;
+  transition: 0.3s;
+}
+.btn:hover {
+  background: #ffaa00;
+  box-shadow: 0 0 20px #ffaa00;
+}
+.placeholder {
+  width: 120px;
+  height: 90px;
+  background: #555;
+  border: 2px solid #ffcc33;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #ffcc33 inset;
+  display: block;
+  margin: 0 auto 8px auto;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+@keyframes scanlines {
+  0% {background-position: 0 0;}
+  100% {background-position: 0 100%;}
+}
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+.scanlines::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.04) 0px,
+      rgba(255,255,255,0.04) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+  animation: scanlines 6s linear infinite;
+  mix-blend-mode: overlay;
+  z-index: 2;
+}
+@keyframes blink {
+  0%, 100% {opacity: 1;}
+  50% {opacity: 0.6;}
+}
+.blink {
+  animation: blink 1.5s infinite;
+}
+@keyframes successFlash {
+  0% {background-color: #444;}
+  50% {background-color: #4caf5080;}
+  100% {background-color: #222;}
+}
+@keyframes damageFlash {
+  0% {background-color: #444;}
+  50% {background-color: #f4433680;}
+  100% {background-color: #222;}
+}
+.success-flash {
+  animation: successFlash 0.6s ease;
+}
+.damage-flash {
+  animation: damageFlash 0.6s ease;
+}
+.hint {
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 10px;
+  min-height: 28px;
+}
+.hint-counter {
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+/* Плавное появление */
+@keyframes fadeIn {
+  from {opacity:0;}
+  to {opacity:1;}
+}
+
+/* Анимация открытия коробки */
+@keyframes openBox {
+  0% { 
+    transform: translate(-50%, -50%) scale(0.8); 
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(255, 204, 51, 0);
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.1); 
+    opacity: 1;
+    box-shadow: 0 0 30px #ffcc33;
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1); 
+    opacity: 1;
+    box-shadow: 0 0 30px #ffcc33;
+  }
+}
+.box-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffcc33;
+  color: #222;
+  padding: 20px 30px;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  z-index: 100;
+  box-shadow: 0 0 30px #ffcc33;
+  animation: openBox 1.5s ease;
+  display: none;
+}
+.final-animation {
+  opacity: 0;
+  animation: none;
+}
+
+.final-animation.show {
+  animation: fadeIn 0.7s ease forwards;
+}
+
+/* Лабиринт памяти (Simon) стили */
+#memoryGameGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 40px);
+  grid-gap: 40px; /* Увеличено расстояние между лампами */
+  justify-content: center;
+  margin-top: 15px;
+}
+.memoryCell {
+  width: 120px;
+  height: 120px;
+  background-color: #444;
+  border: 3px solid #ffcc33;
+  border-radius: 15px;
+  box-shadow: 0 0 8px #ffcc33 inset;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: 5px; /* Добавлен отступ */
+}
+.memoryCell.active {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px #ffcc33;
+  filter: brightness(1.5);
+}
+.memoryCell.correct {
+  background-color: #4caf50;
+  box-shadow: 0 0 20px #4caf50;
+}
+.memoryCell.wrong {
+  background-color: #f44336;
+  box-shadow: 0 0 20px #f44336;
+}
+
+/* Детектив стили */
+.clue {
+  background: #333;
+  padding: 10px;
+  margin: 10px 0;
+  border-left: 3px solid #ffcc33;
+}
+/* Добавляем стили для новой детективной игры */
+.evidence-item {
+  /* ... существующие стили ... */
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.evidence-item:hover {
+  transform: scale(1.05);
+}
+
+#matchingGame {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.matching-card {
+  background: #444;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  border: 2px solid #ffcc33;
+  transition: all 0.3s;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matching-card:hover {
+  background: #ffcc33;
+  color: #222;
+}
+
+.matching-card.selected {
+  background: #ffaa00;
+  box-shadow: 0 0 15px #ffaa00;
+}
+
+.matching-card.matched {
+  background: #4caf50;
+  border-color: #4caf50;
+}
+
+.matching-card.incorrect {
+  animation: shake 0.5s;
+}
+
+#keySelection {
+  display: none;
+}
+
+/* Адаптивность для сетки 3x3 */
+@media (max-width: 600px) {
+  #memoryGameGrid {
+    grid-template-columns: repeat(3, 80px);
+    grid-gap: 15px; /* Увеличено для мобильных */
+  }
+  
+  .memoryCell {
+    width: 80px;
+    height: 80px;
+    margin: 3px; /* Отступ для мобильных */
+  }
+  
+  .matching-card {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Анимация тряски */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+
+/* Стили для игры "Эйла и Далёкий Свет" */
+#ailaGame {
+  max-width: 100%;
+  margin: 0 auto;
+  background: rgba(10, 10, 18, 0.9);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid #ffcc33;
+  box-shadow: 0 0 15px rgba(255, 204, 51, 0.3);
+}
+
+#ailaGame .character-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffcc33;
+  box-shadow: 0 0 15px #ffcc33;
+  margin: 0 auto 15px;
+  display: block;
+}
+
+#ailaGame .resources {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#ailaGame .resource {
+  background: rgba(42, 42, 72, 0.7);
+  padding: 8px 15px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  border: 1px solid #ffcc33;
+  box-shadow: 0 0 8px rgba(255, 204, 51, 0.3);
+  transition: all 0.3s;
+}
+
+#ailaGame .resource:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(255, 204, 51, 0.5);
+}
+
+#ailaGame #story-log {
+  height: 200px;
+  overflow-y: auto;
+  background: rgba(20, 20, 40, 0.7);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #ffcc33;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+#ailaGame .story-entry {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 204, 51, 0.3);
+  animation: slideIn 0.5s ease-out;
+}
+
+#ailaGame .story-entry:last-child {
+  border-bottom: none;
+}
+
+#ailaGame .card {
+  background: linear-gradient(135deg, rgba(42, 42, 72, 0.8), rgba(30, 30, 60, 0.9));
+  border-radius: 10px;
+  padding: 20px;
+  margin: 15px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid #ffcc33;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+#ailaGame .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(255, 204, 51, 0.5);
+}
+
+#ailaGame .card-title {
+  font-family: 'Courier New', Courier, monospace;
+  color: #ffcc33;
+  margin-top: 0;
+  font-size: 1.2rem;
+  text-shadow: 0 0 5px #ffcc33;
+}
+
+#ailaGame .choices {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+#ailaGame .choice {
+  background: linear-gradient(135deg, #ffaa00, #ffcc33);
+  color: #222;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: bold;
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#ailaGame .choice:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(255, 204, 51, 0.4);
+  background: linear-gradient(135deg, #ffcc33, #ffaa00);
+}
+
+#ailaGame .choice:active {
+  transform: translateY(1px);
+}
+
+#ailaGame .choice-secondary {
+  background: linear-gradient(135deg, #4a4a7e, #3a3a5e);
+  color: #eee;
+}
+
+#ailaGame .choice-secondary:hover {
+  background: linear-gradient(135deg, #5a5a8e, #4a4a7e);
+}
+
+#ailaGame .choice-danger {
+  background: linear-gradient(135deg, #c73e3e, #a83232);
+  color: #eee;
+}
+
+#ailaGame .choice-danger:hover {
+  background: linear-gradient(135deg, #d74e4e, #b84242);
+}
+
+#ailaGame .mini-game {
+  background: rgba(30, 30, 60, 0.9);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 1px solid #ffcc33;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+
+#ailaGame .mini-game.active {
+  display: block;
+  animation: fadeIn 0.5s;
+}
+
+#ailaGame .dice-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+#ailaGame .dice {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #222;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.5s;
+}
+
+#ailaGame .dice.rolling {
+  animation: shake 0.5s infinite;
+}
+
+#ailaGame .dice-button {
+  background: linear-gradient(135deg, #ffaa00, #ffcc33);
+  color: #222;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: bold;
+  border: none;
+  font-size: 1rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#ailaGame .dice-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(255, 204, 51, 0.4);
+}
+
+/* Новые стили для карточной системы и шахты */
+.cards-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  min-height: 60px;
+  border: 1px dashed #ffcc33;
+  padding: 10px;
+}
+
+.card-item {
+  background: rgba(255, 204, 51, 0.2);
+  border: 1px solid #ffcc33;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 100px;
+  text-align: center;
+}
+
+.card-item:hover {
+  background: rgba(255, 204, 51, 0.4);
+}
+
+.battle-card {
+  background: rgba(255, 204, 51, 0.3);
+  border: 1px solid #ffcc33;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 100px;
+  text-align: center;
+  margin: 5px;
+}
+
+.battle-card:hover {
+  background: rgba(255, 204, 51, 0.6);
+}
+
+.hex-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.hex {
+  width: 100px;
+  height: 115px;
+  background-color: #333;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.hex[data-explored="true"] {
+  background-color: #666;
+}
+
+#question-game {
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(30, 30, 60, 0.9);
+  border-radius: 10px;
+  border: 1px solid #ffcc33;
+}
+
+.question-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Стили для боевой системы в игре Эйла */
+#battle-screen {
+  background: rgba(30, 30, 60, 0.9);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid #f44336;
+  margin: 20px 0;
+}
+
+.battle-stats {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+.battle-stats div {
+  padding: 8px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 5px;
+}
+
+#battle-log {
+  min-height: 60px;
+  border: 1px solid #ffcc33;
+  padding: 10px;
+  margin-top: 15px;
+  background: rgba(20, 20, 40, 0.7);
+}
+
+.battle-choices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Стили для ввода в викторине */
+.quiz-input {
+  width: 80%;
+  padding: 10px;
+  margin: 10px auto;
+  display: block;
+  background: #444;
+  border: 2px solid #ffcc33;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* Стили для кнопок викторины */
+#quizOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+#quizOptions .btn {
+  width: 100%;
+  padding: 10px;
+  margin: 0;
+}
+
+.quiz-input {
+  grid-column: span 2;
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin: 0 auto;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-15px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@media (max-width: 600px) {
+  #container {
+    margin: 10px 5px 20px 5px;
+    padding: 10px 8px;
+  }
+  nav {
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 14px;
+    font-size: 1rem;
+  }
+  .placeholder {
+    width: 90px;
+    height: 70px;
+  }
+  #memoryGameGrid {
+    grid-template-columns: repeat(2, 90px);
+    grid-gap: 10px;
+  }
+  .memoryCell {
+    width: 90px;
+    height: 90px;
+  }
+  .box-animation {
+    font-size: 1.2rem;
+    padding: 15px 20px;
+  }
+  #ailaGame .choice {
+    min-width: 100%;
+  }
+  #ailaGame #story-log {
+    height: 150px;
+  }
+  .hex-grid {
+    grid-template-columns: repeat(2, 80px);
+  }
+  .hex {
+    width: 80px;
+    height: 92px;
+  }
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.evidence-item {
+  background: #333;
+  border: 2px solid #ffcc33;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.evidence-item:hover {
+  transform: scale(1.05);
+}
+
+.evidence-item.selected {
+  background: rgba(255, 204, 51, 0.2);
+}
+
+.evidence-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-bottom: 8px;
+}
+
+.key-selection {
+  margin-top: 25px;
+}
+
+.keys-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.key-item {
+  background: #333;
+  border: 2px solid #ffcc33;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 100px;
+}
+
+.key-item:hover {
+  background: rgba(255, 204, 51, 0.2);
+  transform: translateY(-5px);
+}
+
+.key-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.solved-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 3px solid #ffcc33;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+  /* ... существующие медиа-запросы ... */
+  
+  .evidence-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .key-item {
+    min-width: 80px;
+    padding: 8px;
+  }
+  
+  .key-item img {
+    width: 50px;
+    height: 50px;
+  }
+}
+}

@@ -1,823 +1,133 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Подарок Тоне — Мини-игры</title>
-<style>
-  /* Общий ретро стиль */
-  body {
-    background: #111 url('https://i.imgur.com/ZZ9GlNq.png') repeat;
-    color: #eee;
-    font-family: 'Courier New', Courier, monospace;
-    margin: 0; padding: 0;
-    user-select: none;
-    overflow-x: hidden;
-  }
-  h1, h2 {
-    text-align: center;
-    text-shadow:
-      0 0 5px #ff0,
-      0 0 10px #ff0,
-      0 0 20px #f80;
-  }
-  #container {
-    max-width: 900px;
-    margin: 20px auto 40px auto;
-    padding: 10px 15px;
-    background: #222a2a;
-    border: 4px double #ffcc33;
-    box-shadow:
-      0 0 10px #ffcc33,
-      inset 0 0 10px #663300;
-    border-radius: 10px;
-  }
-  nav {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-  }
-  nav button {
-    background: #333;
-    color: #ffcc33;
-    border: 2px solid #ffcc33;
-    padding: 8px 14px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 6px;
-    text-shadow: 0 0 5px #ffcc33;
-    transition: 0.3s;
-  }
-  nav button:hover {
-    background: #ffcc33;
-    color: #222;
-  }
-  nav button.active {
-    background: #ffcc33;
-    color: #222;
-    box-shadow: 0 0 15px #ffcc33;
-  }
-  .screen {
-    display: none;
-    animation: fadeIn 0.7s ease forwards;
-  }
-  .screen.active {
-    display: block;
-  }
-  .btn {
-    background: #ffcc33;
-    border: none;
-    color: #222;
-    padding: 10px 20px;
-    font-weight: bold;
-    margin-top: 15px;
-    cursor: pointer;
-    border-radius: 6px;
-    box-shadow:
-      0 0 8px #ffcc33;
-    transition: 0.3s;
-  }
-  .btn:hover {
-    background: #ffaa00;
-    box-shadow: 0 0 20px #ffaa00;
-  }
-  .placeholder {
-    width: 120px;
-    height: 90px;
-    background: #555;
-    border: 2px solid #ffcc33;
-    border-radius: 8px;
-    box-shadow: 0 0 8px #ffcc33 inset;
-    display: block;
-    margin: 0 auto 8px auto;
-  }
-  @keyframes scanlines {
-    0% {background-position: 0 0;}
-    100% {background-position: 0 100%;}
-  }
-  .scanlines {
-    position: relative;
-    overflow: hidden;
-  }
-  .scanlines::after {
-    content: "";
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.04) 0px,
-        rgba(255,255,255,0.04) 1px,
-        transparent 2px,
-        transparent 4px
-      );
-    animation: scanlines 6s linear infinite;
-    mix-blend-mode: overlay;
-    z-index: 2;
-  }
-  @keyframes blink {
-    0%, 100% {opacity: 1;}
-    50% {opacity: 0.6;}
-  }
-  .blink {
-    animation: blink 1.5s infinite;
-  }
-  @keyframes successFlash {
-    0% {background-color: #444;}
-    50% {background-color: #4caf5080;}
-    100% {background-color: #222;}
-  }
-  @keyframes damageFlash {
-    0% {background-color: #444;}
-    50% {background-color: #f4433680;}
-    100% {background-color: #222;}
-  }
-  .success-flash {
-    animation: successFlash 0.6s ease;
-  }
-  .damage-flash {
-    animation: damageFlash 0.6s ease;
-  }
-  .hint {
-    font-size: 0.9rem;
-    font-style: italic;
-    margin-top: 10px;
-    min-height: 28px;
-  }
-  /* Плавное появление */
-  @keyframes fadeIn {
-    from {opacity:0;}
-    to {opacity:1;}
-  }
-  
-  /* Анимация открытия коробки */
-  @keyframes openBox {
-    0% {transform: scale(1); opacity: 1;}
-    50% {transform: scale(1.2); opacity: 0.8;}
-    100% {transform: scale(1); opacity: 1;}
-  }
-  .box-animation {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #ffcc33;
-    color: #222;
-    padding: 20px 30px;
-    border-radius: 10px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    z-index: 100;
-    box-shadow: 0 0 30px #ffcc33;
-    animation: openBox 1.5s ease;
-    display: none;
-  }
-  
-  /* Лабиринт памяти (Simon) стили */
-  #memoryGameGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 120px);
-    grid-gap: 15px;
-    justify-content: center;
-    margin-top: 15px;
-  }
-  .memoryCell {
-    width: 120px;
-    height: 120px;
-    background-color: #444;
-    border: 3px solid #ffcc33;
-    border-radius: 15px;
-    box-shadow: 0 0 8px #ffcc33 inset;
-    cursor: pointer;
-    transition: all 0.4s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-  }
-  .memoryCell.active {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px #ffcc33;
-    filter: brightness(1.5);
-  }
-  .memoryCell.correct {
-    background-color: #4caf50;
-    box-shadow: 0 0 20px #4caf50;
-  }
-  .memoryCell.wrong {
-    background-color: #f44336;
-    box-shadow: 0 0 20px #f44336;
-  }
-
-  /* Детектив стили */
-  .clue {
-    background: #333;
-    padding: 10px;
-    margin: 10px 0;
-    border-left: 3px solid #ffcc33;
-  }
-  .evidence {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-  }
-  .evidence-item {
-    background: #444;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  .evidence-item:hover {
-    background: #555;
-  }
-  .evidence-item.selected {
-    background: #ffcc33;
-    color: #222;
-  }
-  
-  /* Финальная анимация */
-  .final-animation {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 200;
-  }
-  .final-animation img {
-    max-width: 200px;
-    margin-bottom: 20px;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0% {transform: scale(1);}
-    50% {transform: scale(1.1);}
-    100% {transform: scale(1);}
-  }
-  .final-message {
-    font-size: 1.5rem;
-    text-align: center;
-    max-width: 80%;
-    color: #ffcc33;
-    text-shadow: 0 0 10px #ffcc33;
-  }
-
-  @media (max-width: 600px) {
-    #container {
-      margin: 10px 5px 20px 5px;
-      padding: 10px 8px;
-    }
-    nav {
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 10px 14px;
-      font-size: 1rem;
-    }
-    .placeholder {
-      width: 90px;
-      height: 70px;
-    }
-    #memoryGameGrid {
-      grid-template-columns: repeat(2, 90px);
-      grid-gap: 10px;
-    }
-    .memoryCell {
-      width: 90px;
-      height: 90px;
-    }
-    .box-animation {
-      font-size: 1.2rem;
-      padding: 15px 20px;
-    }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Подарок Тоне — Мини-игры</title>
+  <link rel="icon" href="gas-lamp.png" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="container" class="scanlines">
-  <h1>Подарок для Тони — Мини-игры</h1>
-  <nav>
-    <button id="navQuiz" class="active">Викторина</button>
-    <button id="navMemory">Лабиринт памяти</button>
-    <button id="navCards">Эйла и Далёкий Свет</button>
-    <button id="navDetective">Детектив</button>
-  </nav>
-
-  <!-- Викторина -->
-  <div id="quiz" class="screen active" aria-live="polite" aria-atomic="true">
-    <h2>Мини-игра 1: Викторина</h2>
-    <div class="placeholder" id="quizImage"></div>
-    <p><strong id="quizQuestion"></strong></p>
-    <div id="quizOptions">
-      <button class="btn"></button>
-      <button class="btn"></button>
-      <button class="btn"></button>
-      <button class="btn"></button>
+  <div id="welcomeScreen" class="screen active">
+    <div class="scanlines" style="text-align: center; padding: 50px;">
+      <h1>Добро пожаловать, Тоня!</h1>
+      <p>Этот подарок содержит 4 мини-игры, которые нужно пройти последовательно.</p>
+      <p>Каждая открытая игра даёт доступ к следующей и приближает тебя к главному подарку!</p>
+      <div class="placeholder" style="width: 200px; height: 200px; margin: 20px auto; background-image: url('https://i.imgur.com/JtQJjJN.png');"></div>
+      <button class="btn" onclick="startGames()">Начать приключение!</button>
     </div>
-    <p id="quizFeedback" class="hint" role="alert"></p>
-    <p class="hint">Время на ответ: <span id="quizTimer">10</span> сек.</p>
   </div>
-
-  <!-- Лабиринт памяти -->
-  <div id="memoryGame" class="screen" aria-live="polite" aria-atomic="true">
-    <h2>Мини-игра 2: Лабиринт памяти</h2>
-    <p>Запомни последовательность зажигающихся ламп и повтори её!</p>
-    <div id="memoryGameGrid" aria-label="Игровое поле памяти"></div>
-    <p id="memoryFeedback" class="hint" role="alert"></p>
-    <button id="memoryStartBtn" class="btn">Начать игру</button>
-  </div>
-
-  <!-- Эйла и Далёкий Свет -->
-  <div id="cards" class="screen" aria-live="polite" aria-atomic="true">
-    <h2>Мини-игра 3: Эйла и Далёкий Свет</h2>
-    <p>Победи Тень жизненных обстоятельств!</p>
-    <p>Жизни: <span id="playerLives">3</span> | Свет: <span id="lightLevel">5</span> | Тень: <span id="monsterHP">10</span></p>
-    <div style="text-align:center; margin-top:10px;">
-      <button class="btn" onclick="attackMonster()">Атаковать Тень</button>
-      <button class="btn" onclick="healPlayer()">Восстановить свет (Жизнь -1)</button>
-    </div>
-    <p id="cardsFeedback" class="hint" role="alert"></p>
-  </div>
-
-  <!-- Детектив -->
-  <div id="detective" class="screen" aria-live="polite" aria-atomic="true">
-    <h2>Мини-игра 4: Детектив</h2>
-    <p>Расследуй загадочное дело. Собери улики и найди правильный ключ!</p>
-    
-    <div class="clue">
-      <h3>Подсказки:</h3>
-      <p id="clueText">Начни расследование, выбрав одну из улик.</p>
-    </div>
-    
-    <div class="evidence">
-      <div class="evidence-item" onclick="examineEvidence(1)">Фотография</div>
-      <div class="evidence-item" onclick="examineEvidence(2)">Записка</div>
-      <div class="evidence-item" onclick="examineEvidence(3)">Отпечатки</div>
-    </div>
-    
-    <div style="text-align:center; margin-top:10px;">
-      <button class="btn" onclick="solveDetective(1)">Ключ 1</button>
-      <button class="btn" onclick="solveDetective(2)">Ключ 2</button>
-      <button class="btn" onclick="solveDetective(3)">Ключ 3</button>
-    </div>
-    <p id="detectiveFeedback" class="hint" role="alert"></p>
-  </div>
-</div>
-
-<!-- Анимация открытия коробки -->
-<div id="boxAnimation" class="box-animation"></div>
-
-<!-- Финальная анимация -->
-<div id="finalAnimation" class="final-animation">
-  <img src="https://i.imgur.com/JtQJjJN.png" alt="Ключ" id="finalKey">
-  <div class="final-message">Поздравляю! Ты открыла все коробки и нашла главный подарок!</div>
-  <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
-</div>
-
-<script>
-  // ================== ОБЩИЕ ФУНКЦИИ ==================
-  function playSound(url) {
-    if (!url) return;
-    try {
-      const audio = new Audio(url);
-      audio.play().catch(e => console.log("Автовоспроизведение заблокировано"));
-    } catch (e) {
-      console.error("Ошибка воспроизведения звука:", e);
-    }
-  }
-
-  // ================== НАВИГАЦИЯ ==================
-  const navButtons = {
-    quiz: document.getElementById('navQuiz'),
-    memory: document.getElementById('navMemory'),
-    cards: document.getElementById('navCards'),
-    detective: document.getElementById('navDetective'),
-  };
-
-  const screens = {
-    quiz: document.getElementById('quiz'),
-    memory: document.getElementById('memoryGame'),
-    cards: document.getElementById('cards'),
-    detective: document.getElementById('detective'),
-  };
-
-  const gamesCompleted = {
-    quiz: false,
-    memory: false,
-    cards: false,
-    detective: false
-  };
-
-  Object.entries(navButtons).forEach(([key, btn]) => {
-    btn.addEventListener('click', () => {
-      if (canAccessGame(key)) {
-        Object.values(navButtons).forEach(b => b.classList.remove('active'));
-        Object.values(screens).forEach(s => s.classList.remove('active'));
-        btn.classList.add('active');
-        screens[key].classList.add('active');
-        if (key === 'quiz') startQuizTimer();
-      }
-    });
-  });
-
-  function canAccessGame(gameKey) {
-    if (location.search.includes('debug')) return true;
-    
-    const gameOrder = ['quiz', 'memory', 'cards', 'detective'];
-    const currentIndex = gameOrder.indexOf(gameKey);
-    
-    if (gamesCompleted[gameKey]) return true;
-    
-    for (let i = 0; i < currentIndex; i++) {
-      if (!gamesCompleted[gameOrder[i]]) return false;
-    }
-    
-    return true;
-  }
-
-  function showBoxAnimation(boxNumber) {
-    const boxAnim = document.getElementById('boxAnimation');
-    boxAnim.textContent = `Коробка ${boxNumber} открыта!`;
-    boxAnim.style.display = 'block';
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
-    
-    setTimeout(() => {
-      boxAnim.style.display = 'none';
-      
-      if (boxNumber === 1) {
-        navButtons.memory.click();
-      } else if (boxNumber === 2) {
-        navButtons.cards.click();
-      } else if (boxNumber === 3) {
-        navButtons.detective.click();
-      } else if (boxNumber === 4) {
-        showFinalAnimation();
-      }
-    }, 2000);
-  }
-
-  function showFinalAnimation() {
-    document.getElementById('finalAnimation').style.display = 'flex';
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
-  }
-
-  function closeFinalAnimation() {
-    document.getElementById('finalAnimation').style.display = 'none';
-  }
-
-  // ================== ВИКТОРИНА ==================
-  const quizQuestions = [
-    {
-      question: "Как зовут главную героиню?",
-      options: ["Тоня", "Эйла", "Мария", "Далёкий Свет"],
-      answer: 0,
-      image: "https://i.imgur.com/JtQJjJN.png"
-    },
-    {
-      question: "Что из этого светит в темноте?",
-      options: ["Луна", "Свет лампы", "Тень", "Пустота"],
-      answer: 1,
-      image: "https://i.imgur.com/ZZ9GlNq.png"
-    },
-    {
-      question: "Какой ключ открывает коробку?",
-      options: ["Золотой", "Серебряный", "Деревянный", "Невидимый"],
-      answer: 0,
-      image: "https://i.imgur.com/ABC123.png"
-    }
-  ];
-
-  let currentQuiz = 0;
-  const quizQuestionEl = document.querySelector('#quizQuestion');
-  const quizImageEl = document.getElementById('quizImage');
-  const quizButtons = screens.quiz.querySelectorAll('button.btn');
-  const quizFeedback = document.getElementById('quizFeedback');
-  const quizTimerEl = document.getElementById('quizTimer');
-  let quizTimeLeft = 10;
-  let quizTimerInterval = null;
-
-  function loadQuiz() {
-    const q = quizQuestions[currentQuiz];
-    quizQuestionEl.textContent = q.question;
-    quizImageEl.style.backgroundImage = q.image ? `url(${q.image})` : 'none';
-    
-    q.options.forEach((opt, i) => {
-      quizButtons[i].textContent = opt;
-      quizButtons[i].disabled = false;
-      quizButtons[i].classList.remove('success-flash', 'damage-flash');
-    });
-    
-    quizFeedback.textContent = '';
-    quizTimeLeft = 10;
-    quizTimerEl.textContent = quizTimeLeft;
-    startQuizTimer();
-  }
-
-  function startQuizTimer() {
-    clearInterval(quizTimerInterval);
-    quizTimeLeft = 10;
-    quizTimerEl.textContent = quizTimeLeft;
-    quizTimerInterval = setInterval(() => {
-      quizTimeLeft--;
-      quizTimerEl.textContent = quizTimeLeft;
-      if (quizTimeLeft <= 0) {
-        clearInterval(quizTimerInterval);
-        quizFeedback.textContent = 'Время вышло! Попробуй следующий вопрос.';
-        quizFeedback.style.color = '#f44336';
-        disableQuizButtons();
-        setTimeout(() => nextQuizQuestion(), 1500);
-      }
-    }, 1000);
-  }
-
-  function disableQuizButtons() {
-    quizButtons.forEach(btn => btn.disabled = true);
-  }
-
-  function nextQuizQuestion() {
-    currentQuiz++;
-    if (currentQuiz >= quizQuestions.length) {
-      currentQuiz = 0;
-      quizFeedback.textContent = 'Викторина завершена! Поздравляю!';
-      quizFeedback.style.color = '#ffcc33';
-      disableQuizButtons();
-      clearInterval(quizTimerInterval);
-      gamesCompleted.quiz = true;
-      setTimeout(() => showBoxAnimation(1), 1500);
-      return;
-    }
-    loadQuiz();
-  }
-
-  function answerQuiz(selected) {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
-    clearInterval(quizTimerInterval);
-    const correct = quizQuestions[currentQuiz].answer;
-    
-    if (selected === correct) {
-      quizFeedback.textContent = 'Правильно! Молодец!';
-      quizFeedback.style.color = '#4caf50';
-      quizButtons[selected].classList.add('success-flash');
-    } else {
-      quizFeedback.textContent = 'Неправильно. Попробуй ещё раз.';
-      quizFeedback.style.color = '#f44336';
-      quizButtons[selected].classList.add('damage-flash');
-      quizButtons[correct].classList.add('success-flash');
-    }
-    
-    disableQuizButtons();
-    setTimeout(() => nextQuizQuestion(), 1500);
-  }
-
-  quizButtons.forEach((btn, i) => {
-    btn.addEventListener('click', () => answerQuiz(i));
-  });
-
-  // ================== ЛАБИРИНТ ПАМЯТИ ==================
-  const memoryGameGrid = document.getElementById('memoryGameGrid');
-  const memoryFeedback = document.getElementById('memoryFeedback');
-  const memoryStartBtn = document.getElementById('memoryStartBtn');
-
-  const lampImages = [
-    'https://i.imgur.com/JtQJjJN.png',
-    'https://i.imgur.com/ZZ9GlNq.png',
-    'https://i.imgur.com/ABC123.png',
-    'https://i.imgur.com/DEF456.png'
-  ];
   
-  let sequence = [];
-  let userSequence = [];
-  let memoryLevel = 1;
-  let isPlayingSequence = false;
+  <div id="container" class="scanlines" style="display:none">
+    <h1>Подарок для Тони — Мини-игры</h1>
+    <nav>
+      <button id="navQuiz" class="active">Викторина</button>
+      <button id="navMemory">Лабиринт памяти</button>
+      <button id="navCards">Эйла и Далёкий Свет</button>
+      <button id="navDetective">Детектив</button>
+    </nav>
 
-  function createMemoryGrid() {
-    memoryGameGrid.innerHTML = '';
-    const shuffledImages = [...lampImages].sort(() => Math.random() - 0.5);
-    
-    for (let i = 0; i < 4; i++) {
-      const cell = document.createElement('div');
-      cell.classList.add('memoryCell');
-      cell.style.backgroundImage = `url(${shuffledImages[i]})`;
-      cell.dataset.index = i;
-      cell.setAttribute('tabindex', 0);
-      memoryGameGrid.appendChild(cell);
+    <!-- Викторина -->
+    <div id="quiz" class="screen active" aria-live="polite" aria-atomic="true">
+      <h2>Мини-игра 1: Викторина</h2>
+      <div class="placeholder" id="quizImage"></div>
+      <p><strong id="quizQuestion"></strong></p>
+      <div id="quizOptions">
+        <!-- Кнопки или инпут будут добавлены динамически -->
+      </div>
+      <p id="quizFeedback" class="hint" role="alert"></p>
+      <p class="hint">Время на ответ: <span id="quizTimer">15</span> сек.</p>
+    </div>
 
-      cell.addEventListener('click', () => {
-        if (!isPlayingSequence) handleMemoryClick(i, cell);
-      });
-    }
-  }
+    <!-- Лабиринт памяти -->
+    <div id="memoryGame" class="screen" aria-live="polite" aria-atomic="true">
+      <h2>Мини-игра 2: Лабиринт памяти</h2>
+      <p>Запомни последовательность зажигающихся ламп и повтори её!</p>
+      <div id="memoryGameGrid" aria-label="Игровое поле памяти"></div>
+      <p id="memoryFeedback" class="hint" role="alert"></p>
+      <button id="memoryStartBtn" class="btn">Начать игру</button>
+    </div>
 
-  function flashCell(index) {
-    return new Promise((resolve) => {
-      const cell = memoryGameGrid.children[index];
-      cell.classList.add('active');
-      playSound('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
+    <!-- Эйла и Далёкий Свет -->
+    <div id="cards" class="screen" aria-live="polite" aria-atomic="true">
+      <h2>Мини-игра 3: Эйла и Далёкий Свет</h2>
+      <div id="ailaGame">
+        <!-- Содержимое игры будет добавлено динамически -->
+      </div>
+    </div>
+
+    <!-- Детектив -->
+    <div id="detective" class="screen" aria-live="polite" aria-atomic="true">
+      <h2>Мини-игра 4: Детектив</h2>
+      <p>Расследуй загадочное дело. Собери улики и найди правильный ключ!</p>
       
-      setTimeout(() => {
-        cell.classList.remove('active');
-        setTimeout(resolve, 200);
-      }, 700);
-    });
-  }
-
-  async function playSequence() {
-    isPlayingSequence = true;
-    memoryFeedback.textContent = 'Смотри и запоминай последовательность ламп...';
-    
-    for (const idx of sequence) {
-      await flashCell(idx);
-    }
-    
-    isPlayingSequence = false;
-    memoryFeedback.textContent = 'Твой ход! Повтори последовательность.';
-  }
-
-  function handleMemoryClick(i, cell) {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3');
-    userSequence.push(i);
-    cell.classList.add('active');
-    
-    setTimeout(() => {
-      cell.classList.remove('active');
-      const correctIndex = userSequence.length - 1;
+      <div class="clue">
+        <h3>Подсказки: <span class="hint-counter">(0/3)</span></h3>
+        <div id="clueText">Начни расследование, выбрав одну из улик.</div>
+      </div>
       
-      if (userSequence[correctIndex] !== sequence[correctIndex]) {
-        memoryFeedback.textContent = `Неправильно! Ты дошёл до уровня ${memoryLevel}`;
-        memoryFeedback.style.color = '#f44336';
-        memoryStartBtn.disabled = false;
-        userSequence = [];
-        sequence = [];
-        memoryLevel = 1;
-        return;
-      }
+      <div class="evidence-grid" id="evidenceGrid">
+        <div class="evidence-item" data-id="1" onclick="examineEvidence(1)">
+          <img src="https://via.placeholder.com/100?text=Фото" alt="Фотография">
+          <span>Фотография</span>
+        </div>
+        <div class="evidence-item" data-id="2" onclick="examineEvidence(2)">
+          <img src="https://via.placeholder.com/100?text=Записка" alt="Записка">
+          <span>Записка</span>
+        </div>
+        <div class="evidence-item" data-id="3" onclick="examineEvidence(3)">
+          <img src="https://via.placeholder.com/100?text=Отпечатки" alt="Отпечатки">
+          <span>Отпечатки</span>
+        </div>
+        <div class="evidence-item" data-id="4" onclick="examineEvidence(4)">
+          <img src="https://via.placeholder.com/100?text=Карта" alt="Карта">
+          <span>Карта</span>
+        </div>
+        <div class="evidence-item" data-id="5" onclick="examineEvidence(5)">
+          <img src="https://via.placeholder.com/100?text=Дневник" alt="Дневник">
+          <span>Дневник</span>
+        </div>
+      </div>
       
-      if (userSequence.length === sequence.length) {
-        if (memoryLevel >= 3) {
-          memoryFeedback.textContent = 'Поздравляю! Ты прошёл Лабиринт памяти!';
-          memoryFeedback.style.color = '#4caf50';
-          memoryStartBtn.disabled = true;
-          gamesCompleted.memory = true;
-          setTimeout(() => showBoxAnimation(2), 1500);
-        } else {
-          memoryFeedback.textContent = 'Правильно! Переходим на следующий уровень!';
-          memoryFeedback.style.color = '#4caf50';
-          memoryLevel++;
-          userSequence = [];
-          setTimeout(() => startMemoryRound(), 1000);
-        }
-      }
-    }, 300);
-  }
+      <div id="matchingGame">
+        <!-- Контент для сопоставления будет добавлен динамически -->
+      </div>
+      
+      <div id="keySelection" class="key-selection" style="display:none">
+        <h3>Выбери ключ:</h3>
+        <div class="keys-container">
+          <div class="key-item" onclick="solveDetective(1)">
+            <img src="https://via.placeholder.com/80?text=Ключ1" alt="Ключ 1">
+            <span>Старый ключ</span>
+          </div>
+          <div class="key-item" onclick="solveDetective(2)">
+            <img src="https://via.placeholder.com/80?text=Ключ2" alt="Ключ 2">
+            <span>Ржавый ключ</span>
+          </div>
+          <div class="key-item" onclick="solveDetective(3)">
+            <img src="https://via.placeholder.com/80?text=Ключ3" alt="Ключ 3">
+            <span>Золотой ключ</span>
+          </div>
+        </div>
+      </div>
+      
+      <p id="detectiveFeedback" class="hint" role="alert"></p>
+      <button id="hintBtn" class="btn" onclick="showHint()">Показать подсказку</button>
+    </div>
+  </div>
 
-  function startMemoryRound() {
-    memoryStartBtn.disabled = true;
-    memoryFeedback.style.color = '#ffcc33';
-    sequence.push(Math.floor(Math.random() * 4));
-    playSequence();
-  }
+  <!-- Анимация открытия коробки -->
+  <div id="boxAnimation" class="box-animation"></div>
 
-  memoryStartBtn.addEventListener('click', () => {
-    sequence = [];
-    userSequence = [];
-    memoryLevel = 1;
-    memoryFeedback.style.color = '#ffcc33';
-    memoryFeedback.textContent = 'Игра начинается!';
-    startMemoryRound();
-  });
+  <!-- Финальная анимация -->
+  <div id="finalAnimation" class="final-animation">
+    <img src="https://via.placeholder.com/200?text=ПОДАРОК" alt="Главный подарок" id="finalKey">
+    <div class="final-message">Поздравляю! Ты открыла все коробки и нашла главный подарок!</div>
+    <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
+  </div>
 
-  // ================== ЭЙЛА И ДАЛЁКИЙ СВЕТ ==================
-  let playerLives = 3;
-  let lightLevel = 5;
-  let monsterHP = 10;
-
-  const playerLivesEl = document.getElementById('playerLives');
-  const lightLevelEl = document.getElementById('lightLevel');
-  const monsterHPEl = document.getElementById('monsterHP');
-  const cardsFeedback = document.getElementById('cardsFeedback');
-
-  function updateStats() {
-    playerLivesEl.textContent = playerLives;
-    lightLevelEl.textContent = lightLevel;
-    monsterHPEl.textContent = monsterHP;
-  }
-
-  function attackMonster() {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-hit-sword-on-shield-1480.mp3');
-    if (monsterHP <= 0 || playerLives <= 0) return;
-    
-    const damage = Math.floor(Math.random() * 3) + 1;
-    monsterHP -= damage;
-    if (monsterHP < 0) monsterHP = 0;
-    
-    if (monsterHP > 0) {
-      const monsterDamage = Math.floor(Math.random() * 2) + 1;
-      lightLevel -= monsterDamage;
-      if (lightLevel < 0) lightLevel = 0;
-      cardsFeedback.textContent = `Ты нанес урон: ${damage}. Тень контратаковала: -${monsterDamage} света`;
-      cardsFeedback.style.color = '#ffcc33';
-    } else {
-      cardsFeedback.textContent = 'Ты победил Тень! Поздравляю!';
-      cardsFeedback.style.color = '#4caf50';
-      gamesCompleted.cards = true;
-      setTimeout(() => showBoxAnimation(3), 1500);
-    }
-    
-    if (lightLevel <= 0) {
-      playerLives--;
-      lightLevel = 5;
-      if (playerLives <= 0) {
-        cardsFeedback.textContent = 'Игра окончена! Попробуй еще раз.';
-        cardsFeedback.style.color = '#f44336';
-        playerLives = 3;
-        monsterHP = 10;
-        lightLevel = 5;
-      } else {
-        cardsFeedback.textContent = `Ты потерял жизнь! Осталось: ${playerLives}`;
-        cardsFeedback.style.color = '#f44336';
-      }
-    }
-    
-    updateStats();
-  }
-
-  function healPlayer() {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-magical-spell-31.mp3');
-    if (playerLives <= 1 || lightLevel >= 10) return;
-    
-    playerLives--;
-    lightLevel += 3;
-    if (lightLevel > 10) lightLevel = 10;
-    
-    cardsFeedback.textContent = `Ты восстановил свет! +3 света, но -1 жизнь`;
-    cardsFeedback.style.color = '#4caf50';
-    updateStats();
-  }
-
-  // ================== ДЕТЕКТИВ ==================
-  const detectiveClues = {
-    1: "На фото видны странные символы: ☆○□",
-    2: "Текст: 'Ищи ключ там, где светит третий свет'",
-    3: "Следы ведут к старому дубовому шкафу"
-  };
-
-  let collectedEvidence = [];
-
-  function examineEvidence(id) {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-paper-flip-1101.mp3');
-    if (!collectedEvidence.includes(id)) {
-      collectedEvidence.push(id);
-      document.querySelector(`.evidence-item:nth-child(${id})`).classList.add('selected');
-    }
-    
-    document.getElementById('clueText').textContent = detectiveClues[id];
-  }
-
-  function solveDetective(key) {
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
-    if (collectedEvidence.length < 3) {
-      document.getElementById('detectiveFeedback').textContent = "Собери все улики сначала!";
-      document.getElementById('detectiveFeedback').style.color = "#f44336";
-      return;
-    }
-    
-    if (key === 2) {
-      document.getElementById('detectiveFeedback').textContent = "Поздравляю! Ты раскрыл тайну!";
-      document.getElementById('detectiveFeedback').style.color = "#4caf50";
-      gamesCompleted.detective = true;
-      setTimeout(() => showBoxAnimation(4), 1500);
-    } else {
-      document.getElementById('detectiveFeedback').textContent = "Неправильно! Попробуй другой ключ.";
-      document.getElementById('detectiveFeedback').style.color = "#f44336";
-    }
-  }
-
-  // ================== ИНИЦИАЛИЗАЦИЯ ==================
-  document.addEventListener('DOMContentLoaded', () => {
-    loadQuiz();
-    createMemoryGrid();
-    updateStats();
-    
-    // Режим отладки
-    if (location.search.includes('debug')) {
-      Object.keys(gamesCompleted).forEach(k => gamesCompleted[k] = true);
-      console.log("Режим отладки активирован - все игры разблокированы");
-    }
-  });
-</script>
+  <script src="game-data.js"></script>
+  <script src="aila-game.js"></script>
+  <script src="scripts.js"></script>
 </body>
 </html>
