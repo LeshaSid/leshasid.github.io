@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Подарок Тоне — Мини-игры</title>
+  <title>Квест-подарок</title>
   <link rel="icon" href="gas-lamp.png" type="image/x-icon">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,18 +12,18 @@
     <div class="scanlines" style="text-align: center; padding: 50px;">
       <h1>Добро пожаловать, Тоня!</h1>
       <p>Этот подарок содержит 4 мини-игры, которые нужно пройти последовательно.</p>
-      <p>Каждая открытая игра даёт доступ к следующей и приближает тебя к главному подарку!</p>
-      <div class="placeholder" style="width: 200px; height: 200px; margin: 20px auto; background-image: url('https://i.imgur.com/JtQJjJN.png');"></div>
+      <p>Каждая открытая игра позволяет открыть одну коробку с подарком и даёт доступ к следующей и приближает тебя к главному подарку!</p>
+      <div class="placeholder" style="width: 200px; height: 200px; margin: 20px auto; background-image: url('gift.gif');"></div>
       <button class="btn" onclick="startGames()">Начать приключение!</button>
     </div>
   </div>
   
   <div id="container" class="scanlines" style="display:none">
-    <h1>Подарок для Тони — Мини-игры</h1>
+    <h1>Квест-подарок</h1>
     <nav>
       <button id="navQuiz" class="active">Викторина</button>
-      <button id="navMemory">Лабиринт памяти</button>
-      <button id="navCards">Эйла и Далёкий Свет</button>
+      <button id="navMemory">Ламповая память</button>
+      <button id="navCards">Тоня и Далёкий Свет</button>
       <button id="navDetective">Детектив</button>
     </nav>
 
@@ -97,15 +97,15 @@
         <h3>Выбери ключ:</h3>
         <div class="keys-container">
           <div class="key-item" onclick="solveDetective(1)">
-            <img src="https://via.placeholder.com/80?text=Ключ1" alt="Ключ 1">
+            <img src="key.png" alt="Ключ 1">
             <span>Старый ключ</span>
           </div>
           <div class="key-item" onclick="solveDetective(2)">
-            <img src="https://via.placeholder.com/80?text=Ключ2" alt="Ключ 2">
+            <img src="key2.png" alt="Ключ 2">
             <span>Ржавый ключ</span>
           </div>
           <div class="key-item" onclick="solveDetective(3)">
-            <img src="https://via.placeholder.com/80?text=Ключ3" alt="Ключ 3">
+            <img src="key3.png" alt="Ключ 3">
             <span>Золотой ключ</span>
           </div>
         </div>
@@ -121,7 +121,7 @@
 
   <!-- Финальная анимация -->
   <div id="finalAnimation" class="final-animation">
-    <img src="https://via.placeholder.com/200?text=ПОДАРОК" alt="Главный подарок" id="finalKey">
+    <img src="maingift.gif" alt="Главный подарок" id="finalKey">
     <div class="final-message">Поздравляю! Ты открыла все коробки и нашла главный подарок!</div>
     <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
   </div>

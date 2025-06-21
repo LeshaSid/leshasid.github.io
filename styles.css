@@ -199,7 +199,7 @@ nav button.active {
 /* Лабиринт памяти (Simon) стили */
 #memoryGameGrid {
   display: grid;
-  grid-template-columns: repeat(2, 40px);
+  grid-template-columns: repeat(2, 120px);
   grid-gap: 40px; /* Увеличено расстояние между лампами */
   justify-content: center;
   margin-top: 15px;
