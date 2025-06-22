@@ -37,18 +37,18 @@ const gameState = {
 
 const enemies = {
   forest: [
-    {name: "Странные дети", health: 3, strength: 1, reward: "food", image: "https://via.placeholder.com/150?text=Странные+дети"},
-    {name: "Крапива", health: 2, strength: 1, reward: "knowledge", image: "https://via.placeholder.com/150?text=Крапива"},
-    {name: "Бабки", health: 4, strength: 2, reward: "coins", image: "https://via.placeholder.com/150?text=Бабки"}
+    {name: "Странные дети", health: 3, strength: 1, reward: "food", image: "strangekids.jpg"},
+    {name: "Крапива", health: 2, strength: 1, reward: "knowledge", image: "nettle.png"},
+    {name: "Бабки", health: 4, strength: 2, reward: "coins", image: "grannies.jpg"}
   ],
   factory: [
-    {name: "Охранник", health: 4, strength: 2, reward: "coins", image: "https://via.placeholder.com/150?text=Охранник"},
-    {name: "Директор", health: 5, strength: 3, reward: "key_part", image: "https://via.placeholder.com/150?text=Директор"},
-    {name: "Сумасшедший станок", health: 6, strength: 4, reward: "energy", image: "https://via.placeholder.com/150?text=Станок"}
+    {name: "Охранник", health: 4, strength: 2, reward: "coins", image: "guard.jpg"},
+    {name: "Директор", health: 5, strength: 3, reward: "key_part", image: "director.jpg"},
+    {name: "Сумасшедший станок", health: 6, strength: 4, reward: "energy", image: "crazymachine.jpg"}
   ],
   mine: [
-    {name: "Гопник", health: 6, strength: 4, reward: "silk", image: "https://via.placeholder.com/150?text=Гопник"},
-    {name: "Мутный тип", health: 7, strength: 5, reward: "ore", image: "https://via.placeholder.com/150?text=Мутный+тип"},
+    {name: "Гопник", health: 6, strength: 4, reward: "silk", image: "gopnik.jpg"},
+    {name: "Мутный тип", health: 7, strength: 5, reward: "ore", image: "mutnitip.jpg"},
     {name: "Чувак, который держит в страхе весь район", health: 8, strength: 6, reward: "strength", image: "https://via.placeholder.com/150?text=Чувак"}
   ],
   tower: [
@@ -60,94 +60,95 @@ const enemies = {
 
 // Инициализация игры
 function initAilaGame() {
-  const ailaGame = document.getElementById('ailaGame');
-  if (!ailaGame) return;
+  const cardsScreen = document.getElementById('cards');
+  if (!cardsScreen) return;
   
-  // Сбрасываем состояние игры при инициализации
-  resetAilaGame();
-  
-  ailaGame.innerHTML = `
-    <div class="game-header">
-      <img src="tonyarabbit.png" alt="Тоня" class="character-image">
+  cardsScreen.innerHTML = `
+    <h2>Мини-игра 3: Эйла и Далёкий Свет</h2>
+    <div id="ailaGame">
+      <div class="game-header">
+        <img src="tonyarabbit.png" alt="Тоня" class="character-image">
+        
+        <div class="resources">
+          <div class="resource" id="health">
+            <span class="resource-icon">❤️</span>
+            <span class="resource-value">${gameState.health}</span>/<span class="resource-max">${gameState.maxHealth}</span>
+          </div>
+          <div class="resource" id="energy">
+            <span class="resource-icon">⚡</span>
+            <span class="resource-value">${gameState.energy}</span>/<span class="resource-max">${gameState.maxEnergy}</span>
+          </div>
+          <div class="resource" id="coins">
+            <span class="resource-icon">💰</span>
+            <span class="resource-value">${gameState.coins}</span>
+          </div>
+          <div class="resource" id="food">
+            <span class="resource-icon">🍞</span>
+            <span class="resource-value">${gameState.food}</span>
+          </div>
+          <div class="resource" id="knowledge">
+            <span class="resource-icon">📚</span>
+            <span class="resource-value">${gameState.knowledge}</span>
+          </div>
+          <div class="resource" id="strength">
+            <span class="resource-icon">⚔️</span>
+            <span class="resource-value">${gameState.strength}</span>
+          </div>
+        </div>
+      </div>
       
-      <div class="resources">
-        <div class="resource" id="health">
-          <span class="resource-icon">❤️</span>
-          <span class="resource-value">${gameState.health}</span>/<span class="resource-max">${gameState.maxHealth}</span>
+      <div id="inventory-container">
+        <h3>Инвентарь:</h3>
+        <div class="inventory-items" id="inventory-items"></div>
+      </div>
+      
+      <div id="story-log"></div>
+      
+      <div id="card-inventory">
+        <h3>Карты в руке:</h3>
+        <div class="cards-container" id="hand-cards"></div>
+        <h3>Активные карты:</h3>
+        <div class="cards-container" id="active-cards"></div>
+      </div>
+      
+      <div id="battle-screen" class="mini-game" style="display:none">
+        <h3>Бой с <span id="enemy-name"></span></h3>
+        <div class="battle-stats">
+          <div>Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
+          <div><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
         </div>
-        <div class="resource" id="energy">
-          <span class="resource-icon">⚡</span>
-          <span class="resource-value">${gameState.energy}</span>/<span class="resource-max">${gameState.maxEnergy}</span>
+        <div class="battle-choices">
+          <button class="choice" onclick="battleChoice('attack')">Атаковать</button>
+          <button class="choice" onclick="battleChoice('defend')">Защищаться</button>
+          <button class="choice" onclick="battleChoice('flee')">Попытаться убежать</button>
         </div>
-        <div class="resource" id="coins">
-          <span class="resource-icon">💰</span>
-          <span class="resource-value">${gameState.coins}</span>
-        </div>
-        <div class="resource" id="food">
-          <span class="resource-icon">🍞</span>
-          <span class="resource-value">${gameState.food}</span>
-        </div>
-        <div class="resource" id="knowledge">
-          <span class="resource-icon">📚</span>
-          <span class="resource-value">${gameState.knowledge}</span>
-        </div>
-        <div class="resource" id="strength">
-          <span class="resource-icon">⚔️</span>
-          <span class="resource-value">${gameState.strength}</span>
+        <h4>Карты:</h4>
+        <div class="battle-cards" id="battle-cards-container"></div>
+        <div id="battle-log" class="hint"></div>
+      </div>
+      
+      <div id="prologue" class="chapter active">
+        <div class="card">
+          <h3 class="card-title">Пролог: Начало пути</h3>
+          <img src="sanat.jpg" alt="Берег Днепра" class="chapter-image">
+          <p class="card-text">Ты стоишь на берегу Днепра. Перед тобой простирается пустынная земля, освещаемая лишь бледным светом луны. Вдали, за холмами, мерцает странный свет - тот самый Далёкий Свет, о котором ходят легенды. Что ты сделаешь?</p>
+          <div class="choices">
+            <button class="choice" onclick="makeChoice('explore')">🔍 Порыскать по кустам</button>
+            <button class="choice" onclick="makeChoice('light')">✨ Идти к свету</button>
+          </div>
         </div>
       </div>
+      
+      <div id="chapter1" class="chapter"></div>
+      <div id="chapter2" class="chapter"></div>
+      <div id="chapter3" class="chapter"></div>
+      <div id="chapter4" class="chapter"></div>
+      <div id="chapter5" class="chapter"></div>
+      <div id="chapter6" class="chapter"></div>
     </div>
-    
-    <div id="inventory-container">
-      <h3>Инвентарь:</h3>
-      <div class="inventory-items" id="inventory-items"></div>
-    </div>
-    
-    <div id="story-log"></div>
-    
-    <div id="card-inventory">
-      <h3>Карты в руке:</h3>
-      <div class="cards-container" id="hand-cards"></div>
-      <h3>Активные карты:</h3>
-      <div class="cards-container" id="active-cards"></div>
-    </div>
-    
-    <div id="battle-screen" class="mini-game" style="display:none">
-      <h3>Бой с <span id="enemy-name"></span></h3>
-      <div class="battle-stats">
-        <div>Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
-        <div><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
-      </div>
-      <div class="battle-choices">
-        <button class="choice" onclick="battleChoice('attack')">Атаковать</button>
-        <button class="choice" onclick="battleChoice('defend')">Защищаться</button>
-        <button class="choice" onclick="battleChoice('flee')">Попытаться убежать</button>
-      </div>
-      <h4>Карты:</h4>
-      <div class="battle-cards" id="battle-cards-container"></div>
-      <div id="battle-log" class="hint"></div>
-    </div>
-    
-    <div id="prologue" class="chapter active">
-      <div class="card">
-        <h3 class="card-title">Пролог: Начало пути</h3>
-        <img src="sanat.jpg" alt="Берег Днепра" class="chapter-image">
-        <p class="card-text">Ты стоишь на берегу Днепра. Перед тобой простирается пустынная земля, освещаемая лишь бледным светом луны. Вдали, за холмами, мерцает странный свет - тот самый Далёкий Свет, о котором ходят легенды. Что ты сделаешь?</p>
-        <div class="choices">
-          <button class="choice" onclick="makeChoice('explore')">🔍 Порыскать по кустам</button>
-          <button class="choice" onclick="makeChoice('light')">✨ Идти к свету</button>
-        </div>
-      </div>
-    </div>
-    
-    <div id="chapter1" class="chapter"></div>
-    <div id="chapter2" class="chapter"></div>
-    <div id="chapter3" class="chapter"></div>
-    <div id="chapter4" class="chapter"></div>
-    <div id="chapter5" class="chapter"></div>
-    <div id="chapter6" class="chapter"></div>
   `;
 
+  resetAilaGame();
   addToStory("🌌 Ты просыпаешься. Перед тобой - берег Днепра, а вдали мерцает таинственный Далёкий Свет...", true);
   
   // Инициализация карт
@@ -605,11 +606,19 @@ function handleChapter6Choice(choice) {
 function completeAilaGame() {
   gamesCompleted.cards = true;
   showBoxAnimation(3);
+  
+  // Автоматический переход к детективу через 3 секунды
+  setTimeout(() => {
+    if (navButtons && navButtons.detective) {
+      navButtons.detective.click();
+    }
+  }, 3000);
 }
 
 function changeChapter(newChapter) {
   // Скрываем текущую активную главу
-  document.querySelector('.chapter.active')?.classList.remove('active');
+  const activeChapter = document.querySelector('.chapter.active');
+  if (activeChapter) activeChapter.classList.remove('active');
   
   // Показываем новую главу
   const chapterElement = document.getElementById(newChapter);
@@ -1098,9 +1107,3 @@ function renderInventory() {
     inventoryContainer.appendChild(itemEl);
   });
 }
-
-// Загрузка игры
-window.addEventListener('DOMContentLoaded', () => {
-  // Инициализируем игру
-  initAilaGame();
-});

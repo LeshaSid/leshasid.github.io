@@ -21,118 +21,30 @@
   <div id="container" class="scanlines" style="display:none">
     <h1>Квест-подарок</h1>
     <nav>
-      <button id="navQuiz" class="active">Викторина</button>
+      <button id="navMarketing" class="active">Маркетолог</button>
       <button id="navMemory">Ламповая память</button>
       <button id="navCards">Тоня и Далёкий Свет</button>
       <button id="navDetective">Детектив</button>
     </nav>
 
-    <!-- Викторина -->
-    <div id="quiz" class="screen active" aria-live="polite" aria-atomic="true">
-      <h2>Мини-игра 1: Викторина</h2>
-      <div class="placeholder" id="quizImage"></div>
-      <p><strong id="quizQuestion"></strong></p>
-      <div id="quizOptions">
-        <!-- Кнопки или инпут будут добавлены динамически -->
-      </div>
-      <p id="quizFeedback" class="hint" role="alert"></p>
-      <p class="hint">Время на ответ: <span id="quizTimer">15</span> сек.</p>
+    <!-- Маркетинговый симулятор -->
+    <div id="marketingGame" class="screen active" aria-live="polite" aria-atomic="true">
+      <!-- Содержимое маркетинговой игры -->
     </div>
 
     <!-- Лабиринт памяти -->
     <div id="memoryGame" class="screen" aria-live="polite" aria-atomic="true">
-      <h2>Мини-игра 2: Лабиринт памяти</h2>
-      <p>Запомни последовательность зажигающихся ламп и повтори её!</p>
-      <div id="memoryGameGrid" aria-label="Игровое поле памяти"></div>
-      <p id="memoryFeedback" class="hint" role="alert"></p>
-      <button id="memoryStartBtn" class="btn">Начать игру</button>
-      <div class="difficulty">
-        <label>Уровень сложности:</label>
-        <select id="memoryDifficulty">
-          <option value="easy">Легкий (3 уровня)</option>
-          <option value="medium">Средний (5 уровней)</option>
-          <option value="hard">Сложный (7 уровней)</option>
-          <option value="expert">Эксперт (10 уровней)</option>
-        </select>
-      </div>
+      <!-- Содержимое игры памяти -->
     </div>
 
     <!-- Эйла и Далёкий Свет -->
     <div id="cards" class="screen" aria-live="polite" aria-atomic="true">
-      <h2>Мини-игра 3: Эйла и Далёкий Свет</h2>
-      <div id="ailaGame">
-        <!-- Содержимое игры будет добавлено динамически -->
-      </div>
+      <!-- Содержимое карточной игры -->
     </div>
 
     <!-- Детектив -->
     <div id="detective" class="screen" aria-live="polite" aria-atomic="true">
-      <h2>Мини-игра 4: Детектив</h2>
-      <p>Расследуй загадочное дело. Собери улики и найди правильный ключ!</p>
-      
-      <div class="clue">
-        <h3>Подсказки: <span class="hint-counter">(0/6)</span></h3>
-        <div id="clueText">Начни расследование, выбрав одну из улик.</div>
-      </div>
-      
-      <div class="evidence-grid" id="evidenceGrid">
-        <div class="evidence-item" data-id="1" onclick="examineEvidence(1)">
-          <img src="https://via.placeholder.com/100?text=Фото" alt="Фотография">
-          <span>Фотография</span>
-        </div>
-        <div class="evidence-item" data-id="2" onclick="examineEvidence(2)">
-          <img src="https://via.placeholder.com/100?text=Записка" alt="Записка">
-          <span>Записка</span>
-        </div>
-        <div class="evidence-item" data-id="3" onclick="examineEvidence(3)">
-          <img src="https://via.placeholder.com/100?text=Отпечатки" alt="Отпечатки">
-          <span>Отпечатки</span>
-        </div>
-        <div class="evidence-item" data-id="4" onclick="examineEvidence(4)">
-          <img src="https://via.placeholder.com/100?text=Карта" alt="Карта">
-          <span>Карта</span>
-        </div>
-        <div class="evidence-item" data-id="5" onclick="examineEvidence(5)">
-          <img src="https://via.placeholder.com/100?text=Дневник" alt="Дневник">
-          <span>Дневник</span>
-        </div>
-        <div class="evidence-item" data-id="6" onclick="examineEvidence(6)">
-          <img src="https://via.placeholder.com/100?text=Шифр" alt="Шифровальный блок">
-          <span>Шифровальный блок</span>
-        </div>
-      </div>
-      
-      <div id="matchingGame">
-        <!-- Контент для сопоставления будет добавлен динамически -->
-      </div>
-      
-      <div id="codeEntry" style="display:none; margin-top:20px; text-align:center">
-        <h3>Введите код с артефакта:</h3>
-        <input type="text" id="detectiveCode" maxlength="4" placeholder="4 символа">
-        <button class="btn" onclick="checkDetectiveCode()">Проверить</button>
-        <p id="codeFeedback" class="hint"></p>
-      </div>
-      
-      <div id="keySelection" class="key-selection" style="display:none">
-        <h3>Выбери ключ:</h3>
-        <div class="keys-container">
-          <div class="key-item" onclick="solveDetective(1)">
-            <img src="key.png" alt="Ключ 1">
-            <span>Старый ключ</span>
-          </div>
-          <div class="key-item" onclick="solveDetective(2)">
-            <img src="key2.png" alt="Ключ 2">
-            <span>Ржавый ключ</span>
-          </div>
-          <div class="key-item" onclick="solveDetective(3)">
-            <img src="key3.png" alt="Ключ 3">
-            <span>Золотой ключ</span>
-          </div>
-        </div>
-      </div>
-      
-      <p id="detectiveFeedback" class="hint" role="alert"></p>
-      <button id="hintBtn" class="btn" onclick="showHint()">Показать подсказку</button>
+      <!-- Содержимое детективной игры -->
     </div>
   </div>
 
@@ -146,8 +58,11 @@
     <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
   </div>
 
+  <script src="common.js"></script>
   <script src="game-data.js"></script>
+  <script src="memory-game.js"></script>
   <script src="aila-game.js"></script>
-  <script src="scripts.js"></script>
+  <script src="detective-game.js"></script>
+  <script src="marketing-game.js"></script>
 </body>
 </html>
