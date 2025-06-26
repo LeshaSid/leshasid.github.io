@@ -6,15 +6,18 @@
   <title>Квест-подарок</title>
   <link rel="icon" href="gas-lamp.png" type="image/x-icon">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
   <div id="welcomeScreen" class="screen active">
-    <div class="scanlines" style="text-align: center; padding: 50px;">
-      <h1>Добро пожаловать, Тоня!</h1>
-      <p>Этот подарок содержит 4 мини-игры, которые нужно пройти последовательно.</p>
-      <p>Каждая открытая игра позволяет открыть одну коробку с подарком и даёт доступ к следующей и приближает тебя к главному подарку!</p>
-      <div class="placeholder" style="width: 200px; height: 200px; margin: 20px auto; background-image: url('gift.gif');"></div>
-      <button class="btn" onclick="startGames()">Начать приключение!</button>
+    <div class="scanlines" style="text-align: center; padding: 20px;">
+      <div class="welcome-content">
+        <h1>Добро пожаловать, Тоня!</h1>
+        <p>Этот подарок содержит 4 мини-игры, которые нужно пройти последовательно.</p>
+        <p>Каждая открытая игра позволяет открыть одну коробку с подарком и даёт доступ к следующей и приближает тебя к главному подарку!</p>
+        <div class="placeholder" style="width: 200px; height: 200px; margin: 20px auto; background-image: url('gift.gif');"></div>
+        <button class="btn" onclick="startGames()">Начать приключение!</button>
+      </div>
     </div>
   </div>
   
@@ -27,35 +30,27 @@
       <button id="navDetective">Детектив</button>
     </nav>
 
-    <!-- Маркетинговый симулятор -->
     <div id="marketingGame" class="screen active" aria-live="polite" aria-atomic="true">
-      <!-- Содержимое маркетинговой игры -->
-    </div>
+      </div>
 
-    <!-- Лабиринт памяти -->
     <div id="memoryGame" class="screen" aria-live="polite" aria-atomic="true">
-      <!-- Содержимое игры памяти -->
-    </div>
+      </div>
 
-    <!-- Эйла и Далёкий Свет -->
     <div id="cards" class="screen" aria-live="polite" aria-atomic="true">
-      <!-- Содержимое карточной игры -->
-    </div>
+      </div>
 
-    <!-- Детектив -->
     <div id="detective" class="screen" aria-live="polite" aria-atomic="true">
-      <!-- Содержимое детективной игры -->
-    </div>
+      </div>
   </div>
 
-  <!-- Анимация открытия коробки -->
   <div id="boxAnimation" class="box-animation"></div>
 
-  <!-- Финальная анимация -->
   <div id="finalAnimation" class="final-animation">
-    <img src="maingift.gif" alt="Главный подарок" id="finalKey">
-    <div class="final-message">Поздравляю! Ты открыла все коробки и нашла главный подарок!</div>
-    <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
+    <div class="final-content">
+      <img src="maingift.gif" alt="Главный подарок" id="finalKey">
+      <div class="final-message">Поздравляю! Ты открыла все коробки и нашла главный подарок!</div>
+      <button class="btn" onclick="closeFinalAnimation()" style="margin-top: 20px;">Закрыть</button>
+    </div>
   </div>
 
   <script src="common.js"></script>

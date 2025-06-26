@@ -14,6 +14,7 @@ const gamesCompleted = {
 };
 const BOX_CODES = ["1984", "LAMP", "TOWE", "FINA"];
 
+// Добавлено в common.js в функцию startGames()
 function startGames() {
   const welcomeScreen = document.getElementById('welcomeScreen');
   const container = document.getElementById('container');
@@ -21,6 +22,11 @@ function startGames() {
   if (welcomeScreen && container) {
     welcomeScreen.classList.remove('active');
     container.style.display = 'block';
+    
+    // Проверка мобильного устройства
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      document.querySelector('meta[name="viewport"]').content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    }
     
     // Инициализируем навигацию
     initNavigation();
@@ -67,6 +73,41 @@ function initNavigation() {
     }
   });
 }
+
+function initDetectiveGame() {
+  // Сброс состояния детективной игры
+  collectedEvidence = [];
+  hintsUsed = 0;
+  currentEvidence = null;
+  selectedEvidence = null;
+  codeAttempts = 0;
+  
+  // Очистка интерфейса
+  const clueText = document.getElementById('clueText');
+  if (clueText) clueText.innerHTML = "Начни расследование, выбрав одну из улик.";
+  
+  const evidenceItems = document.querySelectorAll('.evidence-item');
+  evidenceItems.forEach(item => item.classList.remove('selected'));
+  
+  const counter = document.querySelector('.hint-counter');
+  if (counter) counter.textContent = "(0/6)";
+  
+  const detectiveFeedback = document.getElementById('detectiveFeedback');
+  if (detectiveFeedback) detectiveFeedback.innerHTML = "";
+  
+  const codeEntry = document.getElementById('codeEntry');
+  if (codeEntry) codeEntry.style.display = 'none';
+  
+  const keySelection = document.getElementById('keySelection');
+  if (keySelection) keySelection.style.display = 'none';
+  
+  const matchingGame = document.getElementById('matchingGame');
+  if (matchingGame) {
+    matchingGame.style.display = 'none';
+    matchingGame.innerHTML = '';
+  }
+}
+
 function canAccessGame(gameKey) {
   if (location.search.includes('debug')) return true;
   
@@ -142,3 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Режим отладки активирован - все игры разблокированы");
   }
 });
+
+
+// Добавлено в конец файла
+// Вспомогательная функция для дерева талантов
+jQuery.expr[':'].contains = function(a, i, m) {
+  return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+};

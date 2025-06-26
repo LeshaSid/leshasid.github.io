@@ -53,8 +53,10 @@ async function playSequence() {
   
   const difficulty = document.getElementById('memoryDifficulty').value;
   const settings = DIFFICULTY_LEVELS[difficulty];
-  const flashDuration = settings.flash - (memoryLevel * 50);
-  const pauseDuration = settings.pause - (memoryLevel * 20);
+  
+  // Скорость увеличивается более агрессивно с уровнем, но с минимальной продолжительностью
+  const flashDuration = Math.max(150, settings.flash - (memoryLevel * 60));
+  const pauseDuration = Math.max(100, settings.pause - (memoryLevel * 30));
   
   for (const idx of sequence) {
     await flashCell(idx, flashDuration);

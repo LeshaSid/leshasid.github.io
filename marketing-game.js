@@ -1,9 +1,9 @@
 // marketing-game.js
 let marketingState = {
   currentDay: 1,
-  budget: 5000,  // Увеличен стартовый бюджет
-  reputation: 40,
-  followers: 80,
+  budget: 300,
+  reputation: 30,
+  followers: 50,
   satisfaction: 50,
   inflation: 0,
   skills: {
@@ -28,15 +28,28 @@ let marketingState = {
   },
   talentPoints: 0,
   experience: 0,
-  nextLevelExp: 100
+  nextLevelExp: 50
+};
+
+const ACTION_COST_SCALING = {
+  1: 0.5,
+  2: 0.4,
+  3: 0.7,
+  4: 0.8,
+  5: 0.4,
+  6: 0.3,
+  7: 0.6,
+  8: 0.5,
+  9: 0.4,
+  10: 0.9
 };
 
 function startMarketingGame() {
   marketingState = {
     currentDay: 1,
-    budget: 5000,  // Увеличен стартовый бюджет
-    reputation: 40,
-    followers: 80,
+    budget: 300,
+    reputation: 30,
+    followers: 50,
     satisfaction: 50,
     inflation: 0,
     skills: {
@@ -61,7 +74,7 @@ function startMarketingGame() {
     },
     talentPoints: 0,
     experience: 0,
-    nextLevelExp: 100
+    nextLevelExp: 50
   };
   
   renderMarketingUI();
@@ -173,7 +186,6 @@ function renderMarketingUI() {
       <div class="event-notice" id="eventNotice"></div>
     </div>
     
-    <!-- Модальное окно талантов -->
     <div id="talentModal" class="modal" style="display:none">
       <div class="modal-content">
         <span class="close" onclick="closeTalentModal()">&times;</span>
@@ -241,16 +253,12 @@ function purchaseTalent(branch, talentId) {
     marketingState.talentPoints -= talent.cost;
     marketingState.talents[branch].push(talentId);
     
-    // Обновляем UI
     document.getElementById('talentPoints').textContent = marketingState.talentPoints;
-    document.querySelector(`.talent-tree-section`).innerHTML = `
-      <h3>Дерево талантов</h3>
-      <p>Активные таланты: ${marketingState.talents.digital.length + marketingState.talents.btl.length + marketingState.talents.atl.length}</p>
-      <button class="btn" onclick="openTalentTree()">Открыть таланты</button>
-    `;
+    document.querySelector(`.talent-tree-section p`).textContent = 
+      `Активные таланты: ${marketingState.talents.digital.length + marketingState.talents.btl.length + marketingState.talents.atl.length}`;
     
     // Перерисовываем ветку
-    const branchElement = document.querySelector(`.talent-branch:has(h3:contains(${branch.toUpperCase()}))`);
+    const branchElement = document.querySelector(`.talent-branch:contains('${branch.toUpperCase()}')`);
     if (branchElement) {
       branchElement.innerHTML = `
         <h3>${branch.charAt(0).toUpperCase() + branch.slice(1)}</h3>
@@ -267,7 +275,6 @@ function generateClient() {
     Math.floor(Math.random() * marketingGameData.clients.length)
   ]};
   
-  // Выбираем случайный запрос для клиента
   const request = marketingGameData.clientRequests[
     Math.floor(Math.random() * marketingGameData.clientRequests.length)
   ];
@@ -284,9 +291,8 @@ function renderActions() {
   container.innerHTML = '';
   
   marketingGameData.marketingActions.forEach(action => {
-    let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation));
+    let actualCost = Math.floor(action.baseCost * ACTION_COST_SCALING[action.id] * (1 + marketingState.inflation));
     
-    // Применяем скидку за навык коммуникации
     if (action.communicable) {
       actualCost = Math.floor(actualCost * (1 - marketingState.skills.communication * 0.05));
     }
@@ -319,7 +325,6 @@ function selectAction(actionId, cost) {
   const action = marketingGameData.marketingActions.find(a => a.id === actionId);
   if (!action) return;
   
-  // Рассчитываем эффективность
   let match = 0;
   action.keywords.forEach(keyword => {
     if (marketingState.client.preferences.some(p => p.includes(keyword))) {
@@ -327,28 +332,22 @@ function selectAction(actionId, cost) {
     }
   });
   
-  // Бонус за креативность
   if (action.creative) {
     match += marketingState.skills.creativity * 5;
   }
   
-  // Бонус за аналитику
   if (action.analytical) {
     match += marketingState.skills.analytics * 3;
   }
   
-  // Случайный фактор
   match += Math.floor(Math.random() * 20);
   match = Math.min(100, match);
   
-  // Применяем эффект
   marketingState.budget -= cost;
-  let effectValue = action.value;
+  let effectValue = Math.floor(action.value * 0.6);
   
-  // Масштабирование за карьеру
   effectValue = Math.floor(effectValue * marketingGameData.careerLevels[marketingState.careerLevel-1].incomeMultiplier);
   
-  // Применяем эффекты
   if (action.effect === 'followers') {
     marketingState.followers += effectValue;
     marketingState.client.satisfaction += Math.floor(effectValue / 2);
@@ -364,35 +363,27 @@ function selectAction(actionId, cost) {
     marketingState.client.satisfaction += Math.floor(effectValue / 3);
   }
   
-  // Начисляем опыт
-  let expGain = 10;
-  if (marketingState.client.type === 'startup') expGain = 20;
-  else if (marketingState.client.type === 'corporate') expGain = 30;
-  
+  let expGain = 5 + Math.floor(match / 10);
   marketingState.experience += expGain;
   
-  // Проверяем повышение уровня
   while (marketingState.experience >= marketingState.nextLevelExp) {
     marketingState.talentPoints += 1;
     marketingState.experience -= marketingState.nextLevelExp;
-    marketingState.nextLevelExp = Math.round(marketingState.nextLevelExp * 1.5);
+    marketingState.nextLevelExp = Math.round(marketingState.nextLevelExp * 1.4);
     showNotification(`Получено очко таланта! Всего: ${marketingState.talentPoints}`, "success");
   }
   
-  // Оплата от клиента
   if (match >= 70) {
-    const payment = marketingState.client.payment + Math.floor(marketingState.client.satisfaction * 0.2);
+    const payment = Math.floor(marketingState.client.payment * 0.7 + marketingState.client.satisfaction * 0.2);
     marketingState.budget += payment;
     showNotification(`Клиент оплатил работу: $${payment}`, "success");
   }
   
-  // Ограничиваем значения
   marketingState.followers = Math.max(0, marketingState.followers);
   marketingState.reputation = Math.max(0, Math.min(100, marketingState.reputation));
   marketingState.satisfaction = Math.max(0, Math.min(100, marketingState.satisfaction));
   marketingState.client.satisfaction = Math.max(0, Math.min(100, marketingState.client.satisfaction));
   
-  // Прогресс сюжета
   const progressIncrease = 5;
   if (marketingState.client.type === 'small') {
     marketingState.storyProgress.smallBusiness = Math.min(100, marketingState.storyProgress.smallBusiness + progressIncrease);
@@ -402,13 +393,10 @@ function selectAction(actionId, cost) {
     marketingState.storyProgress.corporate = Math.min(100, marketingState.storyProgress.corporate + progressIncrease);
   }
   
-  // Проверяем повышение карьеры
   checkCareerProgress();
   
-  // Показываем результат
   showNotification(`Эффективность: ${match}%`, match >= 70 ? "success" : match >= 40 ? "info" : "error");
   
-  // Переход к следующему дню
   setTimeout(() => {
     marketingState.currentDay++;
     
@@ -417,17 +405,15 @@ function selectAction(actionId, cost) {
       return;
     }
     
-    // Каждые 3 дня инфляция
     if (marketingState.currentDay % 3 === 0) {
-      marketingState.inflation += 0.1;
+      marketingState.inflation += 0.05;
       showEvent({ 
         type: "inflation", 
         text: `Инфляция! Цены выросли на ${Math.floor(marketingState.inflation*100)}%` 
       });
     }
     
-    // Случайное событие (30% шанс)
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.25) {
       const event = marketingGameData.events[Math.floor(Math.random() * marketingGameData.events.length)];
       applyEvent(event);
       showEvent(event);
@@ -435,7 +421,7 @@ function selectAction(actionId, cost) {
     
     generateClient();
     updateUI();
-  }, 2000);
+  }, 1500);
   
   updateUI();
 }
@@ -517,7 +503,6 @@ function showNotification(text, type = "info") {
 }
 
 function updateUI() {
-  // Обновляем цифры
   if (document.querySelector('.day-counter')) {
     document.querySelector('.day-counter').textContent = `День ${marketingState.currentDay}/${marketingGameData.days}`;
     document.querySelector('.budget').textContent = `$${Math.floor(marketingState.budget)}`;
@@ -527,7 +512,6 @@ function updateUI() {
     document.querySelector('.experience').textContent = `📊${marketingState.experience}/${marketingState.nextLevelExp}`;
     document.querySelector('.talent').textContent = `🎯${marketingState.talentPoints}`;
     
-    // Обновляем клиента
     if (marketingState.client) {
       document.querySelector('.client-details h3').textContent = marketingState.client.name;
       document.querySelector('.client-details p').textContent = marketingState.client.description;
@@ -541,14 +525,12 @@ function updateUI() {
           marketingState.client.type === 'startup' ? '🚀 Стартап' : '🏢 Корпорация';
       }
       
-      // Обновляем удовлетворенность
       const satisfactionFill = document.querySelector('.satisfaction-fill');
       if (satisfactionFill) {
         satisfactionFill.style.width = `${Math.min(100, marketingState.client.satisfaction)}%`;
       }
     }
     
-    // Обновляем прогресс
     document.querySelectorAll('.progress-fill')[0].style.width = `${marketingState.storyProgress.smallBusiness}%`;
     document.querySelectorAll('.progress-fill')[1].style.width = `${marketingState.storyProgress.startup}%`;
     document.querySelectorAll('.progress-fill')[2].style.width = `${marketingState.storyProgress.corporate}%`;
@@ -556,7 +538,6 @@ function updateUI() {
     document.querySelectorAll('.progress-value')[1].textContent = `${marketingState.storyProgress.startup}%`;
     document.querySelectorAll('.progress-value')[2].textContent = `${marketingState.storyProgress.corporate}%`;
     
-    // Обновляем навыки
     document.querySelectorAll('.skill-level')[0].textContent = `${marketingState.skills.creativity}/5`;
     document.querySelectorAll('.skill-level')[1].textContent = `${marketingState.skills.analytics}/5`;
     document.querySelectorAll('.skill-level')[2].textContent = `${marketingState.skills.communication}/5`;
@@ -564,27 +545,23 @@ function updateUI() {
     document.querySelectorAll('.skill-bar > div')[1].style.width = `${marketingState.skills.analytics*20}%`;
     document.querySelectorAll('.skill-bar > div')[2].style.width = `${marketingState.skills.communication*20}%`;
     
-    // Обновляем карьеру
     const careerElement = document.querySelector('.career-info');
     if (careerElement) {
       careerElement.textContent = marketingGameData.careerLevels[marketingState.careerLevel-1].name;
     }
     
-    // Обновляем офис
     const officeInfo = document.querySelector('.office-info h3');
     if (officeInfo) {
       officeInfo.textContent = marketingGameData.officeLevels[marketingState.officeLevel-1].name;
       officeInfo.nextElementSibling.textContent = marketingGameData.officeLevels[marketingState.officeLevel-1].description;
     }
     
-    // Обновляем изображение офиса
     const officeImage = document.querySelector('.office-image');
     if (officeImage) {
       officeImage.style.backgroundImage = `url('office-${marketingState.officeLevel}.jpg')`;
     }
   }
   
-  // Перерисовываем действия (для инфляции)
   renderActions();
 }
 

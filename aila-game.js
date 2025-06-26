@@ -117,6 +117,9 @@ function initAilaGame() {
           <div>Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
           <div><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
         </div>
+        <div class="enemy-image-container">
+          <img id="enemy-image" src="" alt="Изображение врага">
+        </div>
         <div class="battle-choices">
           <button class="choice" onclick="battleChoice('attack')">Атаковать</button>
           <button class="choice" onclick="battleChoice('defend')">Защищаться</button>
@@ -616,9 +619,10 @@ function completeAilaGame() {
 }
 
 function changeChapter(newChapter) {
-  // Скрываем текущую активную главу
-  const activeChapter = document.querySelector('.chapter.active');
-  if (activeChapter) activeChapter.classList.remove('active');
+  // Скрываем все главы
+  document.querySelectorAll('.chapter').forEach(chapter => {
+    chapter.classList.remove('active');
+  });
   
   // Показываем новую главу
   const chapterElement = document.getElementById(newChapter);
@@ -736,6 +740,13 @@ function startBattle(enemyType, chapter) {
   document.getElementById('enemy-health').textContent = enemy.health;
   document.getElementById('enemy-strength').textContent = enemy.strength;
   document.getElementById('player-health').textContent = gameState.health;
+  
+  // Установка изображения врага
+  const enemyImage = document.getElementById('enemy-image');
+  if (enemyImage) {
+    enemyImage.src = enemy.image;
+    enemyImage.alt = enemy.name;
+  }
   
   document.querySelector(`#${chapter}`).classList.remove('active');
   document.getElementById('battle-screen').style.display = 'block';

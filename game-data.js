@@ -1,5 +1,6 @@
+// game-data.js
 const marketingGameData = {
-  days: 30,
+  days: 20,
   clientRequests: [
     { id: 1, text: "Нужен вирусный маркетинг для привлечения подростков", keywords: ["вирус", "подрост"] },
     { id: 2, text: "Требуется креативная реклама для местного бизнеса", keywords: ["креатив", "местн"] },
@@ -13,16 +14,16 @@ const marketingGameData = {
     { id: 10, text: "Нужна массовая акция с участием аудитории", keywords: ["массов", "участие"] }
   ],
   marketingActions: [
-    { id: 1, name: "Платная реклама", baseCost: 30, keywords: ["вирус", "хайп", "подрост"], effect: "followers", value: 20, scaling: 1.1 },
-    { id: 2, name: "Баннер на остановке", baseCost: 20, keywords: ["местн", "уличн"], effect: "reputation", value: 15, scaling: 1.0 },
-    { id: 3, name: "Бартер с блогерами", baseCost: 40, keywords: ["блогер", "подрост"], effect: "followers", value: 25, scaling: 1.2, communicable: true },
-    { id: 4, name: "Вирусный ролик", baseCost: 50, keywords: ["вирус", "хайп"], effect: "both", value: 30, scaling: 1.3, creative: true },
-    { id: 5, name: "Плакаты в лифтах", baseCost: 25, keywords: ["местн", "повседнев"], effect: "reputation", value: 10, scaling: 0.9 },
-    { id: 6, name: "Уличный перфоманс", baseCost: 15, keywords: ["креатив", "эмоц"], effect: "satisfaction", value: 20, scaling: 1.1, creative: true },
-    { id: 7, name: "Флешмоб в ТЦ", baseCost: 35, keywords: ["массов", "подрост"], effect: "followers", value: 15, scaling: 1.0 },
-    { id: 8, name: "Реклама на радио", baseCost: 30, keywords: ["местн", "эмоц"], effect: "reputation", value: 10, scaling: 0.8 },
-    { id: 9, name: "Email-рассылка", baseCost: 20, keywords: ["таргет", "b2b"], effect: "satisfaction", value: 10, scaling: 0.7, analytical: true },
-    { id: 10, name: "Коллаборация", baseCost: 45, keywords: ["инфлюенсер", "хайп"], effect: "both", value: 25, scaling: 1.4, communicable: true }
+    { id: 1, name: "Платная реклама", baseCost: 50, keywords: ["вирус", "хайп", "подрост"], effect: "followers", value: 20, scaling: 1.1 },
+    { id: 2, name: "Баннер на остановке", baseCost: 30, keywords: ["местн", "уличн"], effect: "reputation", value: 15, scaling: 1.0 },
+    { id: 3, name: "Бартер с блогерами", baseCost: 70, keywords: ["блогер", "подрост"], effect: "followers", value: 25, scaling: 1.2, communicable: true },
+    { id: 4, name: "Вирусный ролик", baseCost: 90, keywords: ["вирус", "хайп"], effect: "both", value: 30, scaling: 1.3, creative: true },
+    { id: 5, name: "Плакаты в лифтах", baseCost: 40, keywords: ["местн", "повседнев"], effect: "reputation", value: 10, scaling: 0.9 },
+    { id: 6, name: "Уличный перфоманс", baseCost: 20, keywords: ["креатив", "эмоц"], effect: "satisfaction", value: 20, scaling: 1.1, creative: true },
+    { id: 7, name: "Флешмоб в ТЦ", baseCost: 60, keywords: ["массов", "подрост"], effect: "followers", value: 15, scaling: 1.0 },
+    { id: 8, name: "Реклама на радио", baseCost: 50, keywords: ["местн", "эмоц"], effect: "reputation", value: 10, scaling: 0.8 },
+    { id: 9, name: "Email-рассылка", baseCost: 30, keywords: ["таргет", "b2b"], effect: "satisfaction", value: 10, scaling: 0.7, analytical: true },
+    { id: 10, name: "Коллаборация", baseCost: 80, keywords: ["инфлюенсер", "хайп"], effect: "both", value: 25, scaling: 1.4, communicable: true }
   ],
   clients: [
     { 
@@ -33,7 +34,7 @@ const marketingGameData = {
       story: "Малый бизнес, пытающийся выжить в условиях кризиса. Нужны недорогие, но эффективные решения.",
       preferences: ["местн", "эконом"],
       satisfaction: 50,
-      payment: 150  // Увеличен платеж
+      payment: 300
     },
     { 
       id: 2, 
@@ -43,7 +44,7 @@ const marketingGameData = {
       story: "Инновационный продукт, но нет узнаваемости. Нужны креативные и вирусные решения.",
       preferences: ["технологи", "инновац"],
       satisfaction: 50,
-      payment: 250  // Увеличен платеж
+      payment: 1000
     },
     { 
       id: 3, 
@@ -53,25 +54,25 @@ const marketingGameData = {
       story: "Бюрократическая система, строгий бюджет. Нужны безопасные и проверенные решения.",
       preferences: ["престиж", "b2b"],
       satisfaction: 50,
-      payment: 400  // Увеличен платеж
+      payment: 2000
     }
   ],
   events: [
     { type: "inflation", text: "Инфляция! Цены выросли на 10%", effect: "cost", value: 0.1 },
-    { type: "boom", text: "Бум в отрасли! Бюджет увеличен", effect: "budget", value: 150 },
+    { type: "boom", text: "Бум в отрасли! Бюджет увеличен", effect: "budget", value: 50 },
     { type: "crisis", text: "Кризис! Репутация снижена", effect: "reputation", value: -10 },
-    { type: "viral", text: "Ваш пост стал вирусным!", effect: "followers", value: 50 },
+    { type: "viral", text: "Ваш пост стал вирусным!", effect: "followers", value: 30 },
     { type: "bonus", text: "Получен бонус 'Креативное мышление'", effect: "bonus", value: "creative" }
   ],
   officeLevels: [
-    { level: 1, name: "Гараж", description: "Начинаем с малого", cost: 0 },
+    { level: 1, name: "Гараж", description: "Начинаем с малого", cost: 500 },
     { level: 2, name: "Коворкинг", description: "Уже лучше", cost: 1000 },
-    { level: 3, name: "Офис", description: "Собственное пространство", cost: 2500 }
+    { level: 3, name: "Офис", description: "Собственное пространство", cost: 1500 }
   ],
   careerLevels: [
     { level: 1, name: "Фрилансер", incomeMultiplier: 1.0, requirements: { reputation: 30, followers: 50 } },
-    { level: 2, name: "Менеджер", incomeMultiplier: 1.5, requirements: { reputation: 60, followers: 150 } },
-    { level: 3, name: "Владелец агентства", incomeMultiplier: 2.0, requirements: { reputation: 90, followers: 300 } }
+    { level: 2, name: "Менеджер", incomeMultiplier: 1.3, requirements: { reputation: 60, followers: 100 } },
+    { level: 3, name: "Владелец агентства", incomeMultiplier: 1.6, requirements: { reputation: 90, followers: 200 } }
   ],
   talentTree: {
     digital: [
