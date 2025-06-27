@@ -1,20 +1,17 @@
-// ================== ОБЩИЕ ФУНКЦИИ ==================
+// common.js
 function playSound(url) {
-  // Заглушка для воспроизведения звука
   console.log("Playing sound:", url);
 }
 
-// ================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==================
 let navButtons, screens;
 const gamesCompleted = {
   marketing: false,
   memory: false,
   cards: false,
-  detective: false
+  room246: false
 };
 const BOX_CODES = ["1984", "LAMP", "TOWE", "FINA"];
 
-// Добавлено в common.js в функцию startGames()
 function startGames() {
   const welcomeScreen = document.getElementById('welcomeScreen');
   const container = document.getElementById('container');
@@ -23,12 +20,10 @@ function startGames() {
     welcomeScreen.classList.remove('active');
     container.style.display = 'block';
     
-    // Проверка мобильного устройства
     if (/Mobi|Android/i.test(navigator.userAgent)) {
       document.querySelector('meta[name="viewport"]').content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     }
     
-    // Инициализируем навигацию
     initNavigation();
     
     if (navButtons && navButtons.marketing) {
@@ -42,14 +37,14 @@ function initNavigation() {
     marketing: document.getElementById('navMarketing'),
     memory: document.getElementById('navMemory'),
     cards: document.getElementById('navCards'),
-    detective: document.getElementById('navDetective'),
+    room246: document.getElementById('navRoom246'),
   };
 
   screens = {
     marketing: document.getElementById('marketingGame'),
     memory: document.getElementById('memoryGame'),
     cards: document.getElementById('cards'),
-    detective: document.getElementById('detective'),
+    room246: document.getElementById('room246Game'),
   };
 
   Object.entries(navButtons).forEach(([key, btn]) => {
@@ -64,58 +59,28 @@ function initNavigation() {
             screens[key].classList.add('active');
           }
           
+          // Запускаем соответствующую игру
           if (key === 'marketing') startMarketingGame();
           if (key === 'memory') resetMemoryGame();
           if (key === 'cards') initAilaGame();
-          if (key === 'detective') initDetectiveGame();
+          // ИСПРАВЛЕННЫЙ ВЫЗОВ: используем объект room246Game
+          if (key === 'room246') room246Game.initRoom246Game(); 
         }
       });
     }
   });
 }
 
-function initDetectiveGame() {
-  // Сброс состояния детективной игры
-  collectedEvidence = [];
-  hintsUsed = 0;
-  currentEvidence = null;
-  selectedEvidence = null;
-  codeAttempts = 0;
-  
-  // Очистка интерфейса
-  const clueText = document.getElementById('clueText');
-  if (clueText) clueText.innerHTML = "Начни расследование, выбрав одну из улик.";
-  
-  const evidenceItems = document.querySelectorAll('.evidence-item');
-  evidenceItems.forEach(item => item.classList.remove('selected'));
-  
-  const counter = document.querySelector('.hint-counter');
-  if (counter) counter.textContent = "(0/6)";
-  
-  const detectiveFeedback = document.getElementById('detectiveFeedback');
-  if (detectiveFeedback) detectiveFeedback.innerHTML = "";
-  
-  const codeEntry = document.getElementById('codeEntry');
-  if (codeEntry) codeEntry.style.display = 'none';
-  
-  const keySelection = document.getElementById('keySelection');
-  if (keySelection) keySelection.style.display = 'none';
-  
-  const matchingGame = document.getElementById('matchingGame');
-  if (matchingGame) {
-    matchingGame.style.display = 'none';
-    matchingGame.innerHTML = '';
-  }
-}
-
 function canAccessGame(gameKey) {
   if (location.search.includes('debug')) return true;
   
-  const gameOrder = ['marketing', 'memory', 'cards', 'detective'];
+  const gameOrder = ['marketing', 'memory', 'cards', 'room246'];
   const currentIndex = gameOrder.indexOf(gameKey);
   
+  // Уже завершенные игры всегда доступны
   if (gamesCompleted[gameKey]) return true;
   
+  // Проверяем, пройдены ли все предыдущие игры
   for (let i = 0; i < currentIndex; i++) {
     if (!gamesCompleted[gameOrder[i]]) return false;
   }
@@ -137,56 +102,47 @@ function showBoxAnimation(boxNumber) {
   boxAnimation.textContent = `🎉 ${boxMessages[boxNumber-1]} открыта!`;
   boxAnimation.style.display = 'block';
   
-  // Анимация
-  boxAnimation.style.animation = 'openBox 1.5s ease';
-  
-  // Скрываем анимацию через 3 секунды
   setTimeout(() => {
     boxAnimation.style.display = 'none';
     
-    // Автоматический переход к следующей игре
+    // Логика перехода после анимации
     switch(boxNumber) {
       case 1:
-        if (navButtons && navButtons.memory) {
-          navButtons.memory.click();
-        }
+        if (navButtons && navButtons.memory) navButtons.memory.click();
         break;
       case 2:
-        if (navButtons && navButtons.cards) {
-          navButtons.cards.click();
-        }
+        if (navButtons && navButtons.cards) navButtons.cards.click();
         break;
       case 3:
-        if (navButtons && navButtons.detective) {
-          navButtons.detective.click();
-        }
+        if (navButtons && navButtons.room246) navButtons.room246.click();
         break;
       case 4:
-        // Показываем финальную анимацию
-        document.getElementById('finalAnimation').classList.add('show');
+        const finalAnimation = document.getElementById('finalAnimation');
+        if(finalAnimation) finalAnimation.classList.add('show');
         break;
     }
   }, 3000);
 }
 
 function closeFinalAnimation() {
-  document.getElementById('finalAnimation').classList.remove('show');
+  const finalAnimation = document.getElementById('finalAnimation');
+  if(finalAnimation) finalAnimation.classList.remove('show');
 }
 
-// Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
-  initNavigation();
+  // Инициализация навигации происходит после нажатия кнопки "Начать"
+  const startButton = document.querySelector('#welcomeScreen .btn');
+  if(startButton) {
+      startButton.onclick = startGames;
+  }
   
-  // Активация режима отладки
   if (location.search.includes('debug')) {
     Object.keys(gamesCompleted).forEach(k => gamesCompleted[k] = true);
     console.log("Режим отладки активирован - все игры разблокированы");
   }
 });
 
-
-// Добавлено в конец файла
-// Вспомогательная функция для дерева талантов
+// Утилита для jQuery :contains, нечувствительная к регистру
 jQuery.expr[':'].contains = function(a, i, m) {
   return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 };
