@@ -1,3 +1,5 @@
+// aila-game.js
+
 // Расширенное состояние игры
 const gameState = {
   chapter: "prologue",
@@ -49,12 +51,12 @@ const enemies = {
   mine: [
     {name: "Гопник", health: 6, strength: 4, reward: "silk", image: "gopnik.jpg"},
     {name: "Мутный тип", health: 7, strength: 5, reward: "ore", image: "mutnitip.jpg"},
-    {name: "Чувак, который держит в страхе весь район", health: 8, strength: 6, reward: "strength", image: "https://via.placeholder.com/150?text=Чувак"}
+    {name: "Чувак, который держит в страхе весь район", health: 8, strength: 6, reward: "strength", image: "chuvak.jpg"}
   ],
   tower: [
-    {name: "Страж башни", health: 8, strength: 6, reward: "final_key", image: "https://via.placeholder.com/150?text=Страж+башни"},
-    {name: "Иллюзия страха", health: 9, strength: 7, reward: "knowledge", image: "https://via.placeholder.com/150?text=Иллюзия+страха"},
-    {name: "Последний испытатель", health: 10, strength: 8, reward: "victory", image: "https://via.placeholder.com/150?text=Испытатель"}
+    {name: "Страж башни", health: 8, strength: 6, reward: "final_key", image: "towerguard.jpg"},
+    {name: "Иллюзия страха", health: 9, strength: 7, reward: "knowledge", image: "illusionoffear.jpg"},
+    {name: "Последний испытатель", health: 10, strength: 8, reward: "victory", image: "lasttester.jpg"}
   ]
 };
 
@@ -64,7 +66,7 @@ function initAilaGame() {
   if (!cardsScreen) return;
   
   cardsScreen.innerHTML = `
-    <h2>Мини-игра 3: Эйла и Далёкий Свет</h2>
+    <h2>Мини-игра 3: Тоня и Далёкий Свет</h2>
     <div id="ailaGame">
       <div class="game-header">
         <img src="tonyarabbit.png" alt="Тоня" class="character-image">
@@ -97,11 +99,6 @@ function initAilaGame() {
         </div>
       </div>
       
-      <div id="inventory-container">
-        <h3>Инвентарь:</h3>
-        <div class="inventory-items" id="inventory-items"></div>
-      </div>
-      
       <div id="story-log"></div>
       
       <div id="card-inventory">
@@ -110,30 +107,35 @@ function initAilaGame() {
         <h3>Активные карты:</h3>
         <div class="cards-container" id="active-cards"></div>
       </div>
+
+      <div id="inventory-container">
+        <h3>Инвентарь:</h3>
+        <div class="inventory-items" id="inventory-items"></div>
+      </div>
       
       <div id="battle-screen" class="mini-game" style="display:none">
         <h3>Бой с <span id="enemy-name"></span></h3>
         <div class="battle-stats">
-          <div>Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
-          <div><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
+          <div class="player-stats">Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
+          <div class="enemy-stats"><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
         </div>
         <div class="enemy-image-container">
           <img id="enemy-image" src="" alt="Изображение врага">
         </div>
+        <h4>Карты для боя:</h4>
+        <div class="battle-cards" id="battle-cards-container"></div>
         <div class="battle-choices">
           <button class="choice" onclick="battleChoice('attack')">Атаковать</button>
           <button class="choice" onclick="battleChoice('defend')">Защищаться</button>
-          <button class="choice" onclick="battleChoice('flee')">Попытаться убежать</button>
+          <button class="choice" onclick="battleChoice('flee')">Убежать</button>
         </div>
-        <h4>Карты:</h4>
-        <div class="battle-cards" id="battle-cards-container"></div>
         <div id="battle-log" class="hint"></div>
       </div>
       
       <div id="prologue" class="chapter active">
         <div class="card">
           <h3 class="card-title">Пролог: Начало пути</h3>
-          <img src="sanat.jpg" alt="Берег Днепра" class="chapter-image">
+          <img src="sanat.png" alt="Берег Днепра" class="chapter-image">
           <p class="card-text">Ты стоишь на берегу Днепра. Перед тобой простирается пустынная земля, освещаемая лишь бледным светом луны. Вдали, за холмами, мерцает странный свет - тот самый Далёкий Свет, о котором ходят легенды. Что ты сделаешь?</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('explore')">🔍 Порыскать по кустам</button>
@@ -161,6 +163,8 @@ function initAilaGame() {
   renderCards();
   renderInventory();
 }
+
+// ... остальной код aila-game.js без изменений ...
 
 // Основная функция выбора
 function makeChoice(choice) {
@@ -205,7 +209,7 @@ function handlePrologueChoice(choice) {
       prologue.innerHTML = `
         <div class="card">
           <h3 class="card-title">Пролог: Находки в кустах</h3>
-          <img src="sanat.jpg" alt="Кусты" class="chapter-image">
+          <img src="sanat.png" alt="Кусты" class="chapter-image">
           <p class="card-text">Среди кустов ты находишь флягу с водой, немного еды и монет. Теперь ты готова отправиться к Далёкому Свету.</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('light')">✨ Идти к Далёкому Свету</button>
@@ -492,8 +496,8 @@ function handleChapter4Choice(choice) {
         
         chapter4.innerHTML = `
           <div class="card">
-            <h3 class="card-title">Глава 4: Башня Света</h3>
-            <img src="https://via.placeholder.com/300x150?text=Башня+Светa" alt="Башня Света" class="chapter-image">
+            <h3 class="card-title">Глава 4: Водонапорная башня</h3>
+            <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
             <p class="card-text">Башня заперта. Тебе нужно найти ключ или другой способ войти.</p>
             <div class="choices">
               <button class="choice" onclick="makeChoice('search_around')">🔍 Искать вокруг башни</button>
@@ -523,8 +527,8 @@ function handleChapter4Choice(choice) {
         
         chapter4.innerHTML = `
           <div class="card">
-            <h3 class="card-title">Глава 4: Башня Света</h3>
-            <img src="https://via.placeholder.com/300x150?text=Башня+Света" alt="Башня Света" class="chapter-image">
+            <h3 class="card-title">Глава 4: Водонапорная башня</h3>
+            <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
             <p class="card-text">Ты нашла ключ! Теперь ты может войти в башню.</p>
             <div class="choices">
               <button class="choice" onclick="makeChoice('enter_tower')">🚪 Войти в башню</button>
@@ -569,7 +573,7 @@ function handleChapter5Choice(choice) {
       chapter5.innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 5: Внутри башни</h3>
-          <img src="https://via.placeholder.com/300x150?text=Внутри+башни" alt="Внутри башни" class="chapter-image">
+          <img src="intowatertower.jpg" alt="Внутри башни" class="chapter-image">
           <p class="card-text">Отдохнув, ты готова продолжить подъём на вершину башни.</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Подняться на вершину</button>
@@ -594,7 +598,7 @@ function handleChapter6Choice(choice) {
       chapter6.innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 6: Финал</h3>
-          <img src="https://via.placeholder.com/300x150?text=Далёкий+Свет" alt="Далёкий Свет" class="chapter-image">
+          <img src="distantlight.jpg" alt="Далёкий Свет" class="chapter-image">
           <p class="card-text">Далёкий Свет активирован. Мир вокруг начинает становиться светлым и радостным. Ты выполнила свою миссию!</p>
           <div class="choices">
             <button class="choice" onclick="initAilaGame()">🔄 Начать заново</button>
@@ -685,9 +689,9 @@ function changeChapter(newChapter) {
     case "chapter4":
       document.getElementById('chapter4').innerHTML = `
         <div class="card">
-          <h3 class="card-title">Глава 4: Башня Света</h3>
-          <img src="https://via.placeholder.com/300x150?text=Башня+Света" alt="Башня Света" class="chapter-image">
-          <p class="card-text">После долгого пути ты наконец видишь перед собой Башню Света - источник Далёкого Света. Башня окружена странными механизмами.</p>
+          <h3 class="card-title">Глава 4: Водонапорная башня</h3>
+          <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
+          <p class="card-text">После долгого пути ты наконец видишь перед собой водонапорную башню - источник Далёкого Света. Башня окружена странными механизмами.</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('enter_tower')">🚪 Попытаться войти</button>
             <button class="choice" onclick="makeChoice('study_machines')">🔧 Изучить механизмы</button>
@@ -702,7 +706,7 @@ function changeChapter(newChapter) {
       document.getElementById('chapter5').innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 5: Внутри башни</h3>
-          <img src="https://via.placeholder.com/300x150?text=Внутри+башни" alt="Внутри башни" class="chapter-image">
+          <img src="intowatertower.jpg" alt="Внутри башни" class="chapter-image">
           <p class="card-text">Ты входишь в башню. Внутри она видит винтовую лестницу, ведущую наверх. Воздух наполнен статическим электричеством.</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Подняться наверх</button>
@@ -716,7 +720,7 @@ function changeChapter(newChapter) {
       document.getElementById('chapter6').innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 6: Сердце Света</h3>
-          <img src="https://via.placeholder.com/300x150?text=Сердце+Света" alt="Сердце Света" class="chapter-image">
+          <img src="distantlight.jpg" alt="Сердце Света" class="chapter-image">
           <p class="card-text">Эйла достигает вершины башни. Перед ней огромный механизм, излучающий Далёкий Свет. Что она сделает?</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('activate_light')">✨ Активировать свет</button>

@@ -10,22 +10,34 @@ const gamesCompleted = {
   cards: false,
   room246: false
 };
-const BOX_CODES = ["1984", "LAMP", "TOWE", "FINA"];
+
+/**
+ * Helper function to enable debug mode from the browser console.
+ * Unlocks all games.
+ */
+function enableDebug() {
+  localStorage.setItem('debugMode', 'true');
+  console.log('Debug mode enabled. All games are unlocked. Refreshing...');
+  // Applying the debug mode requires a page reload to re-evaluate access.
+  window.location.reload();
+}
 
 function startGames() {
   const welcomeScreen = document.getElementById('welcomeScreen');
   const container = document.getElementById('container');
   
   if (welcomeScreen && container) {
-    welcomeScreen.classList.remove('active');
+    welcomeScreen.style.display = 'none'; // Hide instead of removing class for stability
     container.style.display = 'block';
     
+    // Force mobile browsers to respect viewport scale
     if (/Mobi|Android/i.test(navigator.userAgent)) {
       document.querySelector('meta[name="viewport"]').content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     }
     
     initNavigation();
     
+    // Automatically click the first game's navigation button
     if (navButtons && navButtons.marketing) {
       navButtons.marketing.click();
     }
@@ -59,12 +71,13 @@ function initNavigation() {
             screens[key].classList.add('active');
           }
           
-          // Запускаем соответствующую игру
+          // Initialize the corresponding game
           if (key === 'marketing') startMarketingGame();
-          if (key === 'memory') resetMemoryGame();
+          if (key === 'memory') resetMemoryGame(); // This function also serves as an init
           if (key === 'cards') initAilaGame();
-          // ИСПРАВЛЕННЫЙ ВЫЗОВ: используем объект room246Game
           if (key === 'room246') room246Game.initRoom246Game(); 
+        } else {
+          console.warn(`Access to game "${key}" is locked.`);
         }
       });
     }
@@ -72,20 +85,31 @@ function initNavigation() {
 }
 
 function canAccessGame(gameKey) {
-  if (location.search.includes('debug')) return true;
+  // Debug mode: allows access to any game at any time.
+  // To activate, add ?debug=true to the URL or run enableDebug() in the console.
+  const urlParams = new URLSearchParams(window.location.search);
+  const isDebugMode = urlParams.has('debug') || localStorage.getItem('debugMode') === 'true';
+
+  if (isDebugMode) {
+    return true;
+  }
   
   const gameOrder = ['marketing', 'memory', 'cards', 'room246'];
   const currentIndex = gameOrder.indexOf(gameKey);
   
-  // Уже завершенные игры всегда доступны
+  // The first game is always accessible
+  if (currentIndex === 0) return true;
+  
+  // A game is accessible if it's already completed OR if the previous game is completed
   if (gamesCompleted[gameKey]) return true;
   
-  // Проверяем, пройдены ли все предыдущие игры
-  for (let i = 0; i < currentIndex; i++) {
-    if (!gamesCompleted[gameOrder[i]]) return false;
+  // Check if the immediately preceding game has been completed
+  const previousGameKey = gameOrder[currentIndex - 1];
+  if (previousGameKey && gamesCompleted[previousGameKey]) {
+    return true;
   }
   
-  return true;
+  return false;
 }
 
 function showBoxAnimation(boxNumber) {
@@ -93,10 +117,10 @@ function showBoxAnimation(boxNumber) {
   if (!boxAnimation) return;
   
   const boxMessages = [
-    "Коробка 1: Ключ к воспоминаниям",
-    "Коробка 2: Лампа знаний",
-    "Коробка 3: Карта пути",
-    "Коробка 4: Финальный код"
+    "Открой коробку 1!",
+    "Открой корбку 2!",
+    "Открой коробку 3!",
+    "Открой коробку 4!"
   ];
   
   boxAnimation.textContent = `🎉 ${boxMessages[boxNumber-1]} открыта!`;
@@ -105,7 +129,7 @@ function showBoxAnimation(boxNumber) {
   setTimeout(() => {
     boxAnimation.style.display = 'none';
     
-    // Логика перехода после анимации
+    // Logic for transitioning after the animation
     switch(boxNumber) {
       case 1:
         if (navButtons && navButtons.memory) navButtons.memory.click();
@@ -130,19 +154,20 @@ function closeFinalAnimation() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Инициализация навигации происходит после нажатия кнопки "Начать"
   const startButton = document.querySelector('#welcomeScreen .btn');
-  if(startButton) {
+  if (startButton) {
       startButton.onclick = startGames;
   }
   
-  if (location.search.includes('debug')) {
+  // If debug mode is active from a previous session or via URL parameter, unlock all games on load.
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('debug') || localStorage.getItem('debugMode') === 'true') {
     Object.keys(gamesCompleted).forEach(k => gamesCompleted[k] = true);
-    console.log("Режим отладки активирован - все игры разблокированы");
+    console.log("Debug mode is active. All games unlocked.");
   }
 });
 
-// Утилита для jQuery :contains, нечувствительная к регистру
+// Case-insensitive jQuery :contains utility
 jQuery.expr[':'].contains = function(a, i, m) {
   return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 };

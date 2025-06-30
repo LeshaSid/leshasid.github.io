@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Собери подшивку</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0e7ff; /* Lighter, more inviting background */
+            background-image: url('https://placehold.co/1200x800/dbeafe/1e40af?text=Desk+Texture'); /* Placeholder for a desk texture */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden; /* Prevent scrolling on mobile during drag */
+        }
+
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+            border-radius: 20px; /* More rounded corners */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            padding: 30px;
+            width: 100%;
+            max-width: 950px; /* Slightly wider */
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #d1d5db; /* Subtle border */
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .game-title {
+            font-size: 3rem; /* Larger title */
+            font-weight: 800; /* Bolder */
+            color: #1a202c; /* Darker text */
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.3rem; /* Slightly larger info text */
+            color: #4a5568;
+            margin-bottom: 20px;
+            background-color: #f7fafc;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .pages-container {
+            background-color: #dbeafe; /* Lighter blue for table */
+            border-radius: 15px; /* More rounded */
+            padding: 20px;
+            min-height: 250px; /* Taller */
+            position: relative; /* Crucial for absolute positioning of children */
+            transition: transform 0.5s ease-in-out;
+            border: 2px solid #93c5fd; /* Solid border */
+            overflow: hidden; /* Ensure pages don't overflow during wind */
+        }
+
+        .page {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0; /* Softer border */
+            border-radius: 5px; /* Smaller border-radius for more 'page-like' look */
+            padding: 8px 12px; /* Reduced padding */
+            cursor: grab;
+            /* Enhanced box-shadow for a layered paper effect */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15), 0 0 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            touch-action: none; /* Disable default touch actions like scrolling/zooming */
+            font-size: 0.9rem; /* Slightly smaller text */
+            font-weight: 500;
+            text-align: center;
+            flex-shrink: 0;
+            width: 150px; /* Fixed smaller width */
+            box-sizing: border-box;
+            position: absolute; /* Pages are absolutely positioned */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px; /* Fixed smaller height */
+            line-height: 1.2;
+        }
+
+        .page:active {
+            cursor: grabbing;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transform: scale(1.08); /* More pronounced scale */
+            z-index: 1000;
+        }
+
+        .stapling-panel {
+            background-color: #dcfce7; /* Lighter green for panel */
+            border: 3px dashed #34d399; /* Thicker dashed border */
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 180px; /* Taller */
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* More space between stapled pages */
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .stapled-page {
+            background-color: #ffffff;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px; /* More rounded */
+            padding: 10px 15px;
+            width: 90%; /* Slightly narrower */
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 0.95rem; /* Slightly larger text */
+            font-weight: 500;
+            color: #2f855a; /* Darker green text */
+        }
+
+        .stapler-button {
+            background: linear-gradient(to right, #34d399, #10b981); /* Gradient background */
+            color: white;
+            padding: 15px 30px; /* Larger padding */
+            border-radius: 10px; /* More rounded */
+            font-size: 1.2rem; /* Larger font */
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease; /* Smooth transition for all properties */
+            box-shadow: 0 6px 15px rgba(52, 211, 153, 0.5); /* Stronger shadow */
+            border: none;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stapler-button:hover {
+            background: linear-gradient(to right, #22c55e, #059669); /* Darker gradient on hover */
+            transform: translateY(-2px); /* Slight lift */
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.6);
+        }
+
+        .stapler-button:active {
+            transform: translateY(0); /* Press down */
+            box-shadow: 0 2px 5px rgba(34, 197, 94, 0.4);
+        }
+
+        .stapler-button:disabled {
+            background: #a7f3d0;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Stapler click animation */
+        .stapler-button.clicked {
+            animation: stapler-press 0.1s ease-out;
+        }
+
+        @keyframes stapler-press {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+
+        .stapler-jammed-text {
+            color: #ef4444;
+            font-weight: 700; /* Bolder */
+            margin-top: 8px;
+            font-size: 1rem; /* Slightly larger */
+            text-align: center;
+        }
+
+        /* Pop-up styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            background-color: #fff;
+            padding: 40px; /* More padding */
+            border-radius: 20px; /* More rounded */
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+            max-width: 450px; /* Slightly wider */
+            width: 90%;
+            transform: translateY(-30px) scale(0.95); /* Initial smaller and higher position */
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Springy animation */
+        }
+
+        .popup-overlay.active .popup-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .popup-content h3 {
+            font-size: 2.2rem; /* Larger title */
+            color: #dc2626; /* Stronger red */
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .popup-content p {
+            font-size: 1.25rem; /* Larger text */
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .popup-content button {
+            background-color: #ef4444;
+            color: white;
+            padding: 12px 25px; /* Larger padding */
+            border-radius: 10px; /* More rounded */
+            font-size: 1.1rem; /* Larger font */
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        }
+
+        .popup-content button:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+        .popup-content button:active {
+            transform: translateY(0);
+        }
+
+        /* Game End Screen styles */
+        .game-end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.98); /* Almost opaque white */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            z-index: 1500;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .game-end-screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .game-end-screen h2 {
+            font-size: 4rem; /* Much larger title */
+            font-weight: 900; /* Extra bold */
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-end-screen p {
+            font-size: 1.8rem; /* Larger text */
+            color: #4a5568;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+
+        .game-end-screen button {
+            background: linear-gradient(to right, #3b82f6, #2563eb); /* Blue gradient */
+            color: white;
+            padding: 18px 35px; /* Larger padding */
+            border-radius: 12px; /* More rounded */
+            font-size: 1.3rem; /* Larger font */
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .game-end-screen button:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6);
+        }
+        .game-end-screen button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Animations */
+        @keyframes wind-effect {
+            0% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(8px) rotate(1deg); }
+            50% { transform: translateX(-8px) rotate(-1deg); }
+            75% { transform: translateX(8px) rotate(1deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+
+        .wind-active .pages-container {
+            animation: wind-effect 0.4s infinite alternate; /* Faster, more noticeable wind */
+        }
+
+        /* Alert Message Styles */
+        .alert-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            min-width: 250px;
+            text-align: center;
+        }
+
+        .alert-message.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .alert-message.info { background-color: #3b82f6; } /* Blue */
+        .alert-message.error { background-color: #ef4444; } /* Red */
+        .alert-message.success { background-color: #22c55e; } /* Green */
+
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .game-container {
+                padding: 15px;
+                gap: 15px;
+                border-radius: 15px;
+            }
+
+            .game-title {
+                font-size: 2rem;
+            }
+
+            .game-info {
+                font-size: 1rem;
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px 15px;
+            }
+
+            .pages-container {
+                min-height: 180px;
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .page {
+                width: 120px; /* Smaller width for mobile */
+                height: 80px; /* Smaller height for mobile */
+                font-size: 0.75rem; /* Smaller font for mobile */
+                padding: 6px 10px;
+                border-radius: 5px;
+            }
+
+            .stapling-panel {
+                min-height: 140px;
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .stapled-page {
+                font-size: 0.8rem;
+                padding: 7px 10px;
+                border-radius: 6px;
+            }
+
+            .stapler-button {
+                padding: 12px 25px;
+                font-size: 1.1rem;
+                border-radius: 8px;
+            }
+
+            .popup-content {
+                padding: 25px;
+                border-radius: 15px;
+            }
+
+            .popup-content h3 {
+                font-size: 1.8rem;
+            }
+
+            .popup-content p {
+                font-size: 1.1rem;
+            }
+
+            .popup-content button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+
+            .game-end-screen h2 {
+                font-size: 2.5rem;
+            }
+
+            .game-end-screen p {
+                font-size: 1.3rem;
+            }
+
+            .game-end-screen button {
+                padding: 15px 30px;
+                font-size: 1.2rem;
+            }
+            .alert-message {
+                top: 10px;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">Собери подшивку</h1>
+            <p class="text-gray-600">Успей подшить курсовую до дедлайна!</p>
+        </div>
+
+        <div class="game-info">
+            <div class="time-left">Время: <span id="timer">02:30</span></div>
+            <div class="pages-count">Собрано: <span id="stapled-count">0</span> / <span id="total-pages">0</span></div>
+        </div>
+
+        <div class="game-area">
+            <div id="pages-container" class="pages-container">
+                <!-- Pages will be dynamically loaded here by JS -->
+            </div>
+            <div id="stapling-panel" class="stapling-panel">
+                <p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>
+                <!-- Stapled pages will appear here -->
+            </div>
+            <button id="stapler-button" class="stapler-button" disabled>Подшить!</button>
+            <p id="stapler-jammed-message" class="stapler-jammed-text hidden">Степлер заело! Нажми ещё <span id="stapler-clicks-needed"></span> раз(а)!</p>
+        </div>
+
+        <button id="start-button" class="stapler-button mt-4 mx-auto block">Начать игру</button>
+
+        <!-- Professor's Call Pop-up -->
+        <div id="professor-popup-overlay" class="popup-overlay">
+            <div class="popup-content">
+                <h3>Звонок от препода!</h3>
+                <p id="professor-question"></p>
+                <button id="professor-popup-ok">Понял!</button>
+            </div>
+        </div>
+
+        <!-- Game End Screen -->
+        <div id="game-end-screen" class="game-end-screen">
+            <h2 id="end-title"></h2>
+            <p id="end-message"></p>
+            <button id="restart-button">Играть снова</button>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const pagesContainer = document.getElementById('pages-container');
+        const staplingPanel = document.getElementById('stapling-panel');
+        const staplerButton = document.getElementById('stapler-button');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const timerDisplay = document.getElementById('timer');
+        const stapledCountDisplay = document.getElementById('stapled-count');
+        const totalPagesDisplay = document.getElementById('total-pages');
+        const professorPopupOverlay = document.getElementById('professor-popup-overlay');
+        const professorQuestion = document.getElementById('professor-question');
+        const professorPopupOkButton = document.getElementById('professor-popup-ok');
+        const gameEndScreen = document.getElementById('game-end-screen');
+        const endTitle = document.getElementById('end-title');
+        const endMessage = document.getElementById('end-message');
+        const staplerJammedMessage = document.getElementById('stapler-jammed-message');
+        const staplerClicksNeededDisplay = document.getElementById('stapler-clicks-needed');
+
+        // Game state variables
+        let gameStarted = false;
+        let timerInterval;
+        let timeLeft = 150; // 2 minutes 30 seconds
+        let stapledPages = [];
+        let currentPageOrder = []; // To track the current order of pages in the stapling panel
+        let staplerJammed = false;
+        let staplerClicksRemaining = 0;
+        let professorCallActive = false;
+        let correctProfessorPageId = null;
+        let windActive = false;
+        let nextInterferenceTimeoutId; // To store the ID of the next interference timeout
+
+        // Data for the pages, including their correct order
+        let pagesData = [
+            { id: 'page-title', name: 'Заголовок', order: 0 },
+            { id: 'page-contents', name: 'Оглавление', order: 1 },
+            { id: 'page-intro', name: 'Введение', order: 2 },
+            { id: 'page-chapter1', name: 'Глава 1', order: 3 },
+            { id: 'page-chapter2', name: 'Глава 2', order: 4 },
+            { id: 'page-graphs', name: 'Графики', order: 5 },
+            { id: 'page-conclusion', name: 'Заключение', order: 6 },
+            { id: 'page-refs', name: 'Список литературы', order: 7 }
+        ];
+        totalPagesDisplay.textContent = pagesData.length;
+
+        // --- Game Initialization and Setup ---
+
+        function initializeGame() {
+            gameStarted = false;
+            timeLeft = 150; // Reset timer
+            stapledPages = [];
+            currentPageOrder = [];
+            staplerJammed = false;
+            staplerClicksRemaining = 0;
+            professorCallActive = false;
+            correctProfessorPageId = null;
+            windActive = false;
+
+            clearInterval(timerInterval); // Clear any active timer
+            clearTimeout(nextInterferenceTimeoutId); // Clear any pending interference
+
+            timerDisplay.textContent = formatTime(timeLeft);
+            stapledCountDisplay.textContent = 0;
+            staplerButton.disabled = true;
+            staplerJammedMessage.classList.add('hidden');
+            professorPopupOverlay.classList.remove('active');
+            gameEndScreen.classList.remove('active');
+            pagesContainer.classList.remove('wind-active');
+
+            // Reset stapling panel content
+            staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
+            pagesContainer.innerHTML = ''; // Clear existing pages
+
+            createPages(); // Create new pages
+            // Call randomizePagePositions after a slight delay using requestAnimationFrame
+            // This ensures elements are rendered and have their correct dimensions before positioning
+            requestAnimationFrame(() => {
+                randomizePagePositions(); // Randomize initial positions of pages
+            });
+
+            startButton.style.display = 'block'; // Show start button
+            restartButton.style.display = 'none'; // Hide restart button
+            staplerButton.textContent = 'Подшить!'; // Reset stapler button text
+        }
+
+        // Creates page elements and adds them to the pages container
+        function createPages() {
+            // Shuffle pagesData for initial random order on the table
+            const shuffledPagesData = [...pagesData].sort(() => Math.random() - 0.5);
+
+            shuffledPagesData.forEach(page => {
+                const pageElement = document.createElement('div');
+                pageElement.classList.add('page');
+                pageElement.id = page.id;
+                pageElement.textContent = page.name;
+                pageElement.draggable = true; // Make it draggable for desktop
+                pageElement.dataset.order = page.order; // Store original order
+
+                // Add event listeners for drag and touch interactions
+                pageElement.addEventListener('dragstart', handleDragStart);
+                pageElement.addEventListener('dragend', handleDragEnd);
+                pageElement.addEventListener('touchstart', handleTouchStart);
+                pageElement.addEventListener('touchmove', handleTouchMove);
+                pageElement.addEventListener('touchend', handleTouchEnd);
+
+                pagesContainer.appendChild(pageElement);
+            });
+        }
+
+        // Randomizes the absolute positions of all pages within the pages container
+        function randomizePagePositions() {
+            const containerRect = pagesContainer.getBoundingClientRect();
+            // Ensure container has valid dimensions before attempting to place pages
+            if (containerRect.width === 0 || containerRect.height === 0) {
+                // console.error("pagesContainer has zero width or height, cannot randomize positions.");
+                // Try again after a short delay if dimensions are not ready
+                setTimeout(randomizePagePositions, 100);
+                return;
+            }
+
+            const pages = Array.from(pagesContainer.children);
+
+            pages.forEach(page => {
+                const pageRect = page.getBoundingClientRect();
+                // Ensure page has valid dimensions
+                if (pageRect.width === 0 || pageRect.height === 0) {
+                    // console.warn(`Page ${page.id} has zero width or height, skipping randomization.`);
+                    return; // Skip this page, it might not be rendered yet
+                }
+
+                const padding = 20;
+                // Calculate max X and Y coordinates, ensuring they are not negative
+                const maxX = Math.max(0, containerRect.width - pageRect.width - padding);
+                const maxY = Math.max(0, containerRect.height - pageRect.height - padding);
+
+                const randomX = Math.random() * maxX;
+                const randomY = Math.random() * maxY;
+                const randomRotation = Math.random() * 6 - 3; // -3 to 3 degrees for a scattered look
+
+                page.style.left = `${randomX}px`;
+                page.style.top = `${randomY}px`;
+                page.style.transform = `rotate(${randomRotation}deg)`; // Apply random rotation
+            });
+        }
+
+        // --- Timer Functions ---
+        // Formats seconds into MM:SS string
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Starts the game timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (gameStarted) {
+                    timeLeft--;
+                    timerDisplay.textContent = formatTime(timeLeft);
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        endGame(false); // Game over - time ran out
+                    }
+                }
+            }, 1000);
+        }
+
+        // --- Drag and Drop Logic (Desktop) ---
+        let draggedPage = null; // Stores the currently dragged page element
+
+        // Handles the start of a drag operation
+        function handleDragStart(event) {
+            // Prevent drag if game not started or professor call is active
+            if (!gameStarted || professorCallActive) {
+                event.preventDefault();
+                return;
+            }
+            draggedPage = event.target;
+            event.dataTransfer.setData('text/plain', draggedPage.id); // Set data to transfer
+            event.dataTransfer.effectAllowed = 'move'; // Define allowed drag effect
+            draggedPage.classList.add('opacity-50'); // Visual feedback for dragging
+        }
+
+        // Handles the end of a drag operation
+        function handleDragEnd(event) {
+            if (draggedPage) {
+                draggedPage.classList.remove('opacity-50'); // Remove visual feedback
+                draggedPage = null;
+            }
+        }
+
+        // Allow dropping over the stapling panel
+        staplingPanel.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Necessary to allow a drop
+            event.dataTransfer.dropEffect = 'move';
+        });
+
+        // Handle a page being dropped onto the stapling panel
+        staplingPanel.addEventListener('drop', (event) => {
+            event.preventDefault();
+            if (!gameStarted || professorCallActive) return;
+
+            const data = event.dataTransfer.getData('text/plain');
+            const droppedPage = document.getElementById(data);
+
+            // Ensure the dropped element is a page and comes from the pages container
+            if (droppedPage && droppedPage.parentElement === pagesContainer) {
+                // Remove placeholder text if it exists
+                const placeholder = staplingPanel.querySelector('p');
+                if (placeholder && placeholder.textContent === 'Перетащите страницы сюда в правильном порядке') {
+                    placeholder.remove();
+                }
+
+                // Create a new element to represent the stapled page
+                const stapledPageElement = document.createElement('div');
+                stapledPageElement.classList.add('stapled-page');
+                stapledPageElement.textContent = droppedPage.textContent;
+                stapledPageElement.dataset.id = droppedPage.id; // Store original ID
+                stapledPageElement.dataset.order = droppedPage.dataset.order; // Store original order
+
+                staplingPanel.appendChild(stapledPageElement); // Add to stapling panel
+                droppedPage.remove(); // Remove from original container
+
+                // Add to internal list of stapled pages
+                stapledPages.push({
+                    id: droppedPage.id,
+                    order: parseInt(droppedPage.dataset.order)
+                });
+                updateStapledCount(); // Update display
+                checkStaplerReady(); // Check if stapler button should be enabled
+            }
+        });
+
+        // Allow dropping over the pages container itself for reordering
+        pagesContainer.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Allow drop
+            event.dataTransfer.dropEffect = 'move';
+        });
+
+        // Handle a page being dropped within the pages container
+        pagesContainer.addEventListener('drop', (event) => {
+            event.preventDefault();
+            if (!gameStarted || professorCallActive) return;
+
+            const data = event.dataTransfer.getData('text/plain');
+            const droppedPage = document.getElementById(data);
+
+            // If the page is dropped back onto the pagesContainer
+            if (droppedPage && droppedPage.parentElement !== pagesContainer) {
+                pagesContainer.appendChild(droppedPage);
+            }
+
+            // Always update position if a page is dropped on pagesContainer
+            if (droppedPage) {
+                const containerRect = pagesContainer.getBoundingClientRect();
+                const newX = event.clientX - containerRect.left - droppedPage.offsetWidth / 2;
+                const newY = event.clientY - containerRect.top - droppedPage.offsetHeight / 2;
+
+                const padding = 20;
+                // Ensure it stays within bounds
+                droppedPage.style.left = `${Math.max(padding, Math.min(newX, containerRect.width - droppedPage.offsetWidth - padding))}px`;
+                droppedPage.style.top = `${Math.max(padding, Math.min(newY, containerRect.height - droppedPage.offsetHeight - padding))}px`;
+                droppedPage.style.transform = `rotate(${Math.random() * 6 - 3}deg)`; // Apply new random rotation
+            }
+        });
+
+
+        // --- Touch Drag and Drop Logic (Mobile) ---
+        let touchDraggedPage = null; // Stores the element being touched and dragged
+        let initialTouchX, initialTouchY; // Initial touch coordinates relative to the page element
+
+        // Handles the start of a touch (drag) operation
+        function handleTouchStart(event) {
+            // Prevent default touch actions (like scrolling) if game is active
+            if (!gameStarted || professorCallActive) {
+                event.preventDefault(); // Crucial for preventing default scroll/zoom
+                return;
+            }
+            touchDraggedPage = event.target;
+            // Ensure we are dragging a page, not the container itself
+            if (!touchDraggedPage.classList.contains('page')) {
+                touchDraggedPage = null; // Not a draggable page
+                return;
+            }
+
+            event.preventDefault(); // Prevent default browser behavior (scrolling, zooming) for the dragged element
+            touchDraggedPage.classList.add('opacity-50'); // Visual feedback
+            touchDraggedPage.style.position = 'absolute'; // Allow free movement
+            touchDraggedPage.style.zIndex = '1000'; // Bring to front
+
+            const touch = event.touches[0];
+            // Calculate offset from touch point to element's top-left corner
+            initialTouchX = touch.clientX - touchDraggedPage.getBoundingClientRect().left;
+            initialTouchY = touch.clientY - touchDraggedPage.getBoundingClientRect().top;
+        }
+
+        // Handles touch movement (dragging)
+        function handleTouchMove(event) {
+            if (!gameStarted || !touchDraggedPage || professorCallActive) return;
+            event.preventDefault(); // Crucial for preventing scrolling while dragging
+
+            const touch = event.touches[0];
+            // Calculate new position based on touch and initial offset
+            const newX = touch.clientX - initialTouchX;
+            const newY = touch.clientY - initialTouchY;
+
+            touchDraggedPage.style.left = `${newX}px`;
+            touchDraggedPage.style.top = `${newY}px`;
+        }
+
+        // Handles the end of a touch (drop) operation
+        function handleTouchEnd(event) {
+            if (!gameStarted || !touchDraggedPage || professorCallActive) return;
+
+            touchDraggedPage.classList.remove('opacity-50'); // Remove visual feedback
+            touchDraggedPage.style.zIndex = ''; // Reset z-index
+
+            const touch = event.changedTouches[0];
+            // Determine the element under the touch point when released
+            const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+
+            // Check if the page was dropped on the stapling panel or within it
+            if (targetElement && (targetElement === staplingPanel || staplingPanel.contains(targetElement))) {
+                const droppedPage = touchDraggedPage;
+
+                // Remove placeholder text if it exists
+                const placeholder = staplingPanel.querySelector('p');
+                if (placeholder && placeholder.textContent === 'Перетащите страницы сюда в правильном порядке') {
+                    placeholder.remove();
+                }
+
+                // Create a new element to represent the stapled page
+                const stapledPageElement = document.createElement('div');
+                stapledPageElement.classList.add('stapled-page');
+                stapledPageElement.textContent = droppedPage.textContent;
+                stapledPageElement.dataset.id = droppedPage.id;
+                stapledPageElement.dataset.order = droppedPage.dataset.order;
+
+                staplingPanel.appendChild(stapledPageElement); // Add to stapling panel
+                droppedPage.remove(); // Remove from original container
+
+                // Add to internal list of stapled pages
+                stapledPages.push({
+                    id: droppedPage.id,
+                    order: parseInt(droppedPage.dataset.order)
+                });
+                updateStapledCount();
+                checkStaplerReady();
+            } else {
+                // If dropped outside the stapling panel, place it at the drop location within pagesContainer
+                const containerRect = pagesContainer.getBoundingClientRect();
+                const newX = touch.clientX - containerRect.left - touchDraggedPage.offsetWidth / 2;
+                const newY = touch.clientY - containerRect.top - touchDraggedPage.offsetHeight / 2;
+
+                // Ensure it stays within bounds
+                const padding = 20;
+                touchDraggedPage.style.left = `${Math.max(padding, Math.min(newX, containerRect.width - touchDraggedPage.offsetWidth - padding))}px`;
+                touchDraggedPage.style.top = `${Math.max(padding, Math.min(newY, containerRect.height - touchDraggedPage.offsetHeight - padding))}px`;
+                touchDraggedPage.style.transform = `rotate(${Math.random() * 6 - 3}deg)`; // Apply new random rotation
+
+                // Re-add to pages container if it was somehow removed (e.g., from stapling panel due to incorrect order)
+                if (touchDraggedPage.parentElement !== pagesContainer) {
+                    pagesContainer.appendChild(touchDraggedPage);
+                }
+            }
+            touchDraggedPage = null; // Reset dragged page
+        }
+
+        // Randomizes the position of a single page within the pages container
+        // This function is now primarily used for initial placement and when pages are returned from stapling panel
+        function randomizePagePositionsForOne(pageElement) {
+            const containerRect = pagesContainer.getBoundingClientRect();
+            const pageRect = pageElement.getBoundingClientRect();
+            const padding = 20;
+            const maxX = Math.max(0, containerRect.width - pageRect.width - padding);
+            const maxY = Math.max(0, containerRect.height - pageRect.height - padding);
+
+            const randomX = Math.random() * maxX;
+            const randomY = Math.random() * maxY;
+            const randomRotation = Math.random() * 6 - 3; // -3 to 3 degrees
+
+            pageElement.style.left = `${randomX}px`;
+            pageElement.style.top = `${randomY}px`;
+            pageElement.style.transform = `rotate(${randomRotation}deg)`; // Apply random rotation
+            // Ensure it's appended to the pagesContainer if it's not already
+            if (pageElement.parentElement !== pagesContainer) {
+                pagesContainer.appendChild(pageElement);
+            }
+        }
+
+
+        // --- Stapler Logic ---
+        // Checks if the stapler button should be enabled
+        function checkStaplerReady() {
+            if (stapledPages.length > 0 && !staplerJammed) {
+                staplerButton.disabled = false;
+            } else {
+                staplerButton.disabled = true;
+            }
+        }
+
+        // Event listener for the stapler button click
+        staplerButton.addEventListener('click', () => {
+            if (!gameStarted || professorCallActive) return;
+
+            // Add a temporary class for click animation
+            staplerButton.classList.add('clicked');
+            setTimeout(() => {
+                staplerButton.classList.remove('clicked');
+            }, 100); // Remove class after animation duration
+
+            if (staplerJammed) {
+                staplerClicksRemaining--;
+                staplerClicksNeededDisplay.textContent = staplerClicksRemaining;
+                if (staplerClicksRemaining <= 0) {
+                    staplerJammed = false;
+                    staplerJammedMessage.classList.add('hidden');
+                    checkStaplerReady(); // Re-enable if pages are present
+                    staplerButton.textContent = 'Подшить!';
+                }
+            } else {
+                performStapling();
+            }
+        });
+
+        // Performs the stapling action and checks for win/loss conditions
+        function performStapling() {
+            // Get the current order of pages in the stapling panel
+            const currentStapledElements = Array.from(staplingPanel.querySelectorAll('.stapled-page'));
+            currentPageOrder = currentStapledElements.map(el => ({
+                id: el.dataset.id,
+                order: parseInt(el.dataset.order)
+            }));
+
+            // Check if all pages are present
+            if (currentPageOrder.length !== pagesData.length) {
+                alertMessage('Не все страницы собраны!', 'info');
+                return;
+            }
+
+            // Check if pages are in the correct order
+            const isCorrectOrder = currentPageOrder.every((page, index) => page.order === index);
+
+            if (isCorrectOrder) {
+                endGame(true); // Win!
+            } else {
+                // Incorrect order: reset stapling panel and return pages to table
+                alertMessage('Неправильный порядок! Попробуйте снова.', 'error');
+                staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
+                stapledPages.forEach(page => {
+                    const originalPageData = pagesData.find(p => p.id === page.id);
+                    if (originalPageData) {
+                        const pageElement = document.createElement('div');
+                        pageElement.classList.add('page');
+                        pageElement.id = originalPageData.id;
+                        pageElement.textContent = originalPageData.name;
+                        pageElement.draggable = true;
+                        pageElement.dataset.order = originalPageData.order;
+
+                        pageElement.addEventListener('dragstart', handleDragStart);
+                        pageElement.addEventListener('dragend', handleDragEnd);
+                        pageElement.addEventListener('touchstart', handleTouchStart);
+                        pageElement.addEventListener('touchmove', handleTouchMove);
+                        pageElement.addEventListener('touchend', handleTouchEnd);
+
+                        pagesContainer.appendChild(pageElement);
+                        // Use requestAnimationFrame to ensure proper re-rendering and positioning
+                        requestAnimationFrame(() => {
+                            randomizePagePositionsForOne(pageElement); // Place it randomly
+                        });
+                    }
+                });
+                stapledPages = []; // Clear stapled pages list
+                currentPageOrder = []; // Clear current order
+                updateStapledCount();
+                checkStaplerReady();
+            }
+        }
+
+        // Updates the displayed count of stapled pages
+        function updateStapledCount() {
+            stapledCountDisplay.textContent = stapledPages.length;
+        }
+
+        // --- Interference Logic ---
+
+        // Triggers a random interference event
+        function triggerInterference() {
+            if (!gameStarted || professorCallActive) return; // Don't trigger if game not started or professor call active
+
+            const interferenceType = Math.floor(Math.random() * 3); // 0: Wind, 1: Stapler Jam, 2: Professor Call
+
+            switch (interferenceType) {
+                case 0:
+                    activateWind();
+                    break;
+                case 1:
+                    activateStaplerJam();
+                    break;
+                case 2:
+                    activateProfessorCall();
+                    break;
+            }
+            // Schedule the next interference
+            nextInterferenceTimeoutId = setTimeout(triggerInterference, Math.random() * 20000 + 10000); // Between 10-30 seconds
+        }
+
+        // Activates the wind effect
+        function activateWind() {
+            if (windActive) return;
+            windActive = true;
+            pagesContainer.classList.add('wind-active');
+            // Shuffle pages within the container and re-randomize positions
+            const pages = Array.from(pagesContainer.children);
+            pages.sort(() => Math.random() - 0.5);
+            pages.forEach(page => pagesContainer.appendChild(page));
+            // Use requestAnimationFrame to ensure proper re-rendering and positioning
+            requestAnimationFrame(() => {
+                randomizePagePositions();
+            });
+
+            alertMessage('Ветер! Страницы перемешались!', 'info');
+            setTimeout(() => {
+                pagesContainer.classList.remove('wind-active');
+                windActive = false;
+            }, 3000); // Wind lasts for 3 seconds
+        }
+
+        // Activates the stapler jam effect
+        function activateStaplerJam() {
+            if (staplerJammed) return;
+            staplerJammed = true;
+            staplerClicksRemaining = Math.floor(Math.random() * 3) + 2; // Needs 2-4 clicks
+            staplerJammedMessage.classList.remove('hidden');
+            staplerClicksNeededDisplay.textContent = staplerClicksRemaining;
+            staplerButton.disabled = true; // Disable until fixed
+            staplerButton.textContent = 'Заел!';
+            alertMessage('Степлер заело!', 'error');
+        }
+
+        // Activates the professor call event
+        function activateProfessorCall() {
+            if (professorCallActive) return;
+            professorCallActive = true;
+            gameStarted = false; // Pause game timer and interactions
+
+            // Pick a random page that is NOT yet stapled to ask about
+            const availablePages = pagesData.filter(page => !stapledPages.some(sp => sp.id === page.id));
+            if (availablePages.length === 0) {
+                professorCallActive = false;
+                gameStarted = true;
+                return; // No pages left to ask about
+            }
+
+            const randomPage = availablePages[Math.floor(Math.random() * availablePages.length)];
+            correctProfessorPageId = randomPage.id;
+            professorQuestion.textContent = `Где "${randomPage.name}"?!`;
+            professorPopupOverlay.classList.add('active');
+
+            // Add click listener to pages for the professor's question
+            pagesContainer.querySelectorAll('.page').forEach(pageElement => {
+                pageElement.addEventListener('click', handleProfessorPageClick, { once: true }); // Listen only once
+            });
+        }
+
+        // Handles a click on a page during a professor call
+        function handleProfessorPageClick(event) {
+            if (!professorCallActive) return;
+
+            const clickedPageId = event.target.id;
+            if (clickedPageId === correctProfessorPageId) {
+                alertMessage('Правильно! Продолжай!', 'success');
+                resolveProfessorCall(true);
+            } else {
+                alertMessage('Неверно! Поторопись!', 'error');
+                resolveProfessorCall(false);
+            }
+            // Ensure all professor click listeners are removed after a selection
+            removeAllProfessorClickListeners();
+        }
+
+        // Handles clicking the "Понял!" button on the professor popup
+        professorPopupOkButton.addEventListener('click', () => {
+            // If user clicks OK without selecting, it's a penalty
+            if (professorCallActive) {
+                alertMessage('Время уходит! Будь внимательнее!', 'error');
+                resolveProfessorCall(false); // Treat as incorrect
+            }
+            // Ensure all professor click listeners are removed
+            removeAllProfessorClickListeners();
+        });
+
+        // Removes all click listeners added for the professor call
+        function removeAllProfessorClickListeners() {
+            pagesContainer.querySelectorAll('.page').forEach(pageElement => {
+                pageElement.removeEventListener('click', handleProfessorPageClick);
+            });
+        }
+
+        // Resolves the professor call, applying penalties if incorrect
+        function resolveProfessorCall(isCorrect) {
+            professorPopupOverlay.classList.remove('active');
+            professorCallActive = false;
+            gameStarted = true; // Resume game
+
+            if (!isCorrect) {
+                timeLeft = Math.max(0, timeLeft - 15); // Lose 15 seconds for incorrect answer
+                timerDisplay.textContent = formatTime(timeLeft);
+            }
+            correctProfessorPageId = null; // Reset correct page ID
+        }
+
+        // --- Game End Logic ---
+        // Ends the game, displays win/loss screen
+        function endGame(win) {
+            gameStarted = false;
+            clearInterval(timerInterval); // Stop timer
+            clearTimeout(nextInterferenceTimeoutId); // Stop any pending interference
+            staplerButton.disabled = true;
+            startButton.style.display = 'none';
+            restartButton.style.display = 'block';
+
+            gameEndScreen.classList.add('active');
+            if (win) {
+                endTitle.textContent = 'Победа!';
+                endTitle.classList.remove('text-red-600');
+                endTitle.classList.add('text-green-600');
+
+                let bonusMessage = '';
+                const timeTaken = 150 - timeLeft; // Calculate time taken
+                if (timeTaken < 60) { // Less than 1 minute
+                    bonusMessage = 'Успел до дедлайна!';
+                } else if (timeTaken < 90) { // Less than 1.5 minutes
+                    bonusMessage = 'Отличник подшивки!';
+                } else {
+                    bonusMessage = 'Подшивка от души!'; // If completed but took longer
+                }
+                endMessage.textContent = `Курсовая подшита! ${bonusMessage}`;
+                endMessage.classList.remove('text-red-500');
+                endMessage.classList.add('text-green-700');
+
+            } else {
+                endTitle.textContent = 'Поражение!';
+                endTitle.classList.remove('text-green-600');
+                endTitle.classList.add('text-red-600');
+                endMessage.textContent = 'Время вышло! Курсовая не сдана.';
+                endMessage.classList.remove('text-green-700');
+                endMessage.classList.add('text-red-500');
+            }
+        }
+
+        // --- Utility Functions ---
+        // Displays a temporary alert message
+        function alertMessage(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert-message', type);
+            alertDiv.textContent = message;
+
+            document.body.appendChild(alertDiv);
+
+            // Show the alert
+            setTimeout(() => {
+                alertDiv.classList.add('show');
+            }, 10); // Small delay to allow CSS transition
+
+            // Hide and remove the alert after a duration
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                setTimeout(() => alertDiv.remove(), 300); // Remove after fade out
+            }, 2500);
+        }
+
+        // --- Event Listeners ---
+        // Start button click handler
+        startButton.addEventListener('click', () => {
+            gameStarted = true;
+            startButton.style.display = 'none';
+            startTimer();
+            // Trigger first interference after a delay
+            nextInterferenceTimeoutId = setTimeout(triggerInterference, Math.random() * 10000 + 5000); // 5-15 seconds
+        });
+
+        // Restart button click handler
+        restartButton.addEventListener('click', initializeGame);
+
+        // Add resize event listener to re-randomize page positions on window resize
+        window.addEventListener('resize', () => {
+            // Only re-randomize if the game is not active (e.g., during initial load or between games)
+            // or if wind is active (to re-distribute after wind effect)
+            if (!gameStarted || windActive) {
+                requestAnimationFrame(randomizePagePositions);
+            }
+        });
+
+
+        // Initial setup when the window loads
+        window.onload = initializeGame;
+
+    </script>
+</body>
+</html>

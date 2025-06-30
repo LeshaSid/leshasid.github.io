@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Essential for mobile responsiveness -->
+    <title>Взлом замка скрепкой</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the game */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        .game-container {
+            background-color: #2d3748; /* Slightly lighter dark background for container */
+            border-radius: 1rem; /* Rounded corners */
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 90vw; /* Responsive width: takes 90% of viewport width */
+            width: 800px; /* Max width for larger screens */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #e2e8f0; /* Light text color */
+            border: 1px solid #4a5568;
+        }
+
+        .lock-mechanism {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            width: 100%; /* Ensures it takes full width of its container */
+            height: 150px; /* Height for pins */
+            background-color: #4a5568; /* Lock body color */
+            border-radius: 0.5rem;
+            padding: 1.5rem; /* Increased padding to give more space for pins */
+            position: relative;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            overflow: hidden; /* Ensure pins don't overflow */
+        }
+
+        .pin-slot {
+            width: 15%; /* Responsive width for each pin slot */
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pin {
+            width: 80%; /* Width of the pin itself */
+            background-color: #cbd5e0; /* Pin color */
+            border-radius: 0.25rem 0.25rem 0 0; /* Rounded top corners */
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            transition: height 0.05s linear, background-color 0.1s ease-in-out; /* Smooth movement and color change */
+            border: 1px solid #a0aec0;
+        }
+
+        .pin.set {
+            background-color: #2f855a; /* Darker green when set */
+            border-color: #276749;
+        }
+
+        .paperclip {
+            position: absolute;
+            bottom: 0; /* Align with the bottom of the lock mechanism */
+            width: 50px; /* Paperclip width */
+            height: 70px; /* Paperclip height */
+            background-color: #fbd38d; /* Paperclip color */
+            border-radius: 0.5rem 0.5rem 0 0;
+            transition: left 0.1s ease-out; /* Smooth horizontal movement */
+            border: 2px solid #ed8936;
+            z-index: 10; /* Ensure paperclip is on top */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 5px;
+            box-sizing: border-box;
+        }
+
+        .paperclip-tip {
+            width: 10px;
+            height: 20px;
+            background-color: #ed8936;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .tension-indicator-container {
+            width: 100%;
+            height: 20px;
+            background-color: #4a5568;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            overflow: hidden;
+            border: 1px solid #4a5568;
+        }
+
+        .tension-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #fc8181; /* Red for tension */
+            border-radius: 0.5rem;
+            transition: width 0.1s linear;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap; /* Allows buttons to wrap to next line on smaller screens */
+            justify-content: center;
+        }
+
+        .control-button {
+            background-color: #4299e1; /* Blue button */
+            color: white;
+            padding: 0.75rem 1.5rem; /* Sufficient padding for touch targets */
+            border-radius: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .control-button:hover {
+            background-color: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .control-button:active {
+            background-color: #2b6cb0;
+            transform: translateY(0);
+        }
+
+        .message-box {
+            background-color: #2d3748;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 1.1rem;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #4a5568;
+        }
+
+        /* Styles for the win animation message */
+        .message-box.win-animation {
+            font-size: 2.5rem; /* Larger font for emphasis */
+            font-weight: bold;
+            color: #48bb78; /* Green for win */
+            animation: scale-up-fade-in 2s forwards; /* Animation duration and fill mode */
+        }
+
+        @keyframes scale-up-fade-in {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .locked-message {
+            color: #e53e3e; /* Red for lockout */
+            font-weight: bold;
+        }
+
+        .win-message { /* This class is now primarily for the initial state before animation */
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments for screens up to 768px wide (typical tablet portrait) */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 1rem; /* Reduce padding on smaller screens */
+                width: 95vw; /* Take more width on smaller screens */
+            }
+            .lock-mechanism {
+                height: 120px; /* Slightly reduce height */
+                padding: 0.5rem; /* Reduce padding */
+            }
+            .paperclip {
+                width: 40px; /* Adjust paperclip size */
+                height: 60px;
+            }
+            .controls {
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 0.75rem; /* Reduce gap between stacked buttons */
+            }
+            .control-button {
+                width: 100%; /* Make buttons take full width */
+            }
+            .text-3xl { /* Adjust heading size for better fit */
+                font-size: 2rem;
+            }
+            .text-md { /* Adjust paragraph size */
+                font-size: 0.95rem;
+            }
+            .message-box { /* Adjust message box font size */
+                font-size: 1rem;
+            }
+            .message-box.win-animation { /* Adjust win animation font size for mobile */
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Further adjustments for very small screens (e.g., mobile portrait) */
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 0.75rem;
+            }
+            .lock-mechanism {
+                height: 100px;
+            }
+            .paperclip {
+                width: 35px;
+                height: 50px;
+            }
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+            .text-md {
+                font-size: 0.9rem;
+            }
+            .message-box {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
+            .message-box.win-animation {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="text-3xl font-bold mb-4 text-center">Взлом замка скрепкой</h1>
+        <p class="text-md text-center mb-6">
+            Цель: Открыть замок, правильно поднимая пины.
+            Используйте &larr; &rarr; для перемещения скрепки, &uarr; для поднятия пина, и <kbd>Пробел</kbd> для натяжения.
+            <br>
+            Чтобы поднять пин, натяжение должно быть в его "идеальной точке" (индикатор натяжения станет фиолетовым). Замок блокируется только при максимальном натяжении.
+        </p>
+
+        <div class="lock-mechanism" id="lockMechanism">
+            <!-- Pins will be dynamically added here by JavaScript -->
+            <div class="paperclip" id="paperclip">
+                <div class="paperclip-tip"></div>
+            </div>
+        </div>
+
+        <div class="tension-indicator-container">
+            <div class="tension-bar" id="tensionBar"></div>
+        </div>
+        <p class="text-sm text-center mt-2 text-gray-400">Натяжение пружины (удерживайте Пробел)</p>
+
+        <div class="message-box" id="messageBox">
+            Начните взлом!
+        </div>
+
+        <div class="controls">
+            <button class="control-button" id="moveLeftBtn">&larr; Влево</button>
+            <button class="control-button" id="liftPinBtn">&uarr; Поднять Пин</button>
+            <button class="control-button" id="moveRightBtn">&rarr; Вправо</button>
+            <button class="control-button" id="applyTensionBtn">Натяжение</button>
+        </div>
+        <!-- New "Open Lock" button -->
+        <button class="control-button reset-button" id="openLockBtn" style="display: none;">Открыть Замок</button>
+    </div>
+
+    <script>
+        // Game variables
+        let numPins = 6; // Fixed number of pins for the game
+        const pins = []; // Array to store pin objects
+        const pinElements = []; // Array to store pin DOM elements
+        let paperclipPosition = 0; // Current horizontal position of the paperclip (index of pin)
+        let tension = 0; // Current tension applied (0-100)
+        let lockoutTimer = 0; // Timer for lockout state
+        let gameLocked = false; // Is the game temporarily locked?
+        let gameWon = false; // Has the game been won?
+
+        // DOM elements
+        const lockMechanism = document.getElementById('lockMechanism');
+        const paperclip = document.getElementById('paperclip');
+        const tensionBar = document.getElementById('tensionBar');
+        const messageBox = document.getElementById('messageBox');
+        const moveLeftBtn = document.getElementById('moveLeftBtn');
+        const liftPinBtn = document.getElementById('liftPinBtn');
+        const moveRightBtn = document.getElementById('moveRightBtn');
+        const applyTensionBtn = document.getElementById('applyTensionBtn');
+        const openLockBtn = document.getElementById('openLockBtn'); // Reference to the new button
+
+        // Constants for game logic
+        const MAX_PIN_HEIGHT = 80;
+        const MIN_PIN_HEIGHT = 10;
+        const PIN_LIFT_AMOUNT = 2;
+        const TENSION_INCREASE_RATE = 5;
+        const TENSION_DECREASE_RATE = 1;
+        const MAX_TENSION = 100;
+        const TENSION_OVERLOAD_THRESHOLD = MAX_TENSION; 
+        const LOCKOUT_DURATION = 3000;
+        const PIN_TOLERANCE = 2;
+        const SWEET_SPOT_RANGE_SIZE = 25; 
+        const WIN_ANIMATION_DURATION = 2000; // Duration for the win animation in milliseconds
+
+        // Initialize game
+        function initializeGame() {
+            // Clear existing pins
+            pinElements.forEach(el => el.remove());
+            pins.length = 0;
+            pinElements.length = 0;
+
+            // Create pins
+            for (let i = 0; i < numPins; i++) {
+                const pinSlot = document.createElement('div');
+                pinSlot.className = 'pin-slot';
+                lockMechanism.appendChild(pinSlot);
+
+                const pin = document.createElement('div');
+                pin.className = 'pin';
+                pinSlot.appendChild(pin);
+                pinElements.push(pin);
+
+                // Generate sweet spot for each pin
+                const sweetSpotMin = Math.floor(Math.random() * (MAX_TENSION - SWEET_SPOT_RANGE_SIZE - 10)) + 10;
+                const sweetSpotMax = sweetSpotMin + SWEET_SPOT_RANGE_SIZE;
+
+                // Each pin has a target height, hardness, and sweet spot for tension
+                pins.push({
+                    currentHeight: MIN_PIN_HEIGHT,
+                    targetHeight: Math.floor(Math.random() * (MAX_PIN_HEIGHT - MIN_PIN_HEIGHT - 20)) + MIN_PIN_HEIGHT + 10,
+                    hardness: Math.random() * 0.5 + 0.5,
+                    isSet: false,
+                    sweetSpotMin: sweetSpotMin,
+                    sweetSpotMax: sweetSpotMax
+                });
+
+                // Set initial visual height
+                pin.style.height = `${MIN_PIN_HEIGHT}%`;
+            }
+
+            // Set initial paperclip position to the first pin
+            paperclipPosition = 0;
+            updatePaperclipPosition();
+
+            tension = 0;
+            updateTensionBar();
+            lockoutTimer = 0;
+            gameLocked = false;
+            gameWon = false; // Game is not won at start
+            showMessage("Начните взлом!");
+            enableControls();
+            openLockBtn.style.display = 'none'; // Hide the "Open Lock" button
+            openLockBtn.disabled = true; // Disable it
+        }
+
+        // Update paperclip visual position - adapts to screen size due to percentage widths
+        function updatePaperclipPosition() {
+            const pinSlotWidth = lockMechanism.offsetWidth / numPins;
+            const paperclipWidth = paperclip.offsetWidth;
+            const newLeft = (paperclipPosition * pinSlotWidth) + (pinSlotWidth / 2) - (paperclipWidth / 2);
+            paperclip.style.left = `${newLeft}px`;
+            updateTensionBar();
+        }
+
+        // Update tension bar visual
+        function updateTensionBar() {
+            tensionBar.style.width = `${tension}%`;
+
+            const currentPin = pins[paperclipPosition];
+            let inSweetSpot = false;
+
+            if (currentPin && !currentPin.isSet) {
+                inSweetSpot = tension >= currentPin.sweetSpotMin && tension <= currentPin.sweetSpotMax;
+            }
+
+            if (inSweetSpot) {
+                tensionBar.style.backgroundColor = '#667eea'; // Purple for sweet spot
+            } else {
+                if (tension >= TENSION_OVERLOAD_THRESHOLD) { 
+                    tensionBar.style.backgroundColor = '#e53e3e'; // Red
+                } else if (tension > MAX_TENSION / 2) {
+                    tensionBar.style.backgroundColor = '#f6ad55'; // Orange
+                } else {
+                    tensionBar.style.backgroundColor = '#48bb78'; // Green
+                }
+            }
+        }
+
+        // Display messages to the user
+        function showMessage(msg, type = '') {
+            messageBox.textContent = msg;
+            messageBox.className = 'message-box';
+            if (type === 'locked') {
+                messageBox.classList.add('locked-message');
+            } else if (type === 'win') {
+                messageBox.classList.add('win-message');
+            }
+        }
+
+        // Disable all controls (including the new Open Lock button if it's not the one to be enabled)
+        function disableControls() {
+            moveLeftBtn.disabled = true;
+            liftPinBtn.disabled = true;
+            moveRightBtn.disabled = true;
+            applyTensionBtn.disabled = true;
+            openLockBtn.disabled = true; // Disable "Open Lock" button by default when controls are disabled
+        }
+
+        // Enable all controls (excluding Open Lock button unless it's the specific action)
+        function enableControls() {
+            moveLeftBtn.disabled = false;
+            liftPinBtn.disabled = false;
+            moveRightBtn.disabled = false;
+            applyTensionBtn.disabled = false;
+            openLockBtn.disabled = true; // Ensure it's disabled unless explicitly enabled
+            openLockBtn.style.display = 'none'; // Ensure it's hidden unless explicitly shown
+        }
+
+        // Game loop for tension decay and lockout
+        let gameLoopInterval;
+        function startGameLoop() {
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
+            gameLoopInterval = setInterval(() => {
+                // Tension decay
+                if (!isApplyingTension && tension > 0) {
+                    tension = Math.max(0, tension - TENSION_DECREASE_RATE);
+                    updateTensionBar();
+                }
+
+                // Lockout timer
+                if (lockoutTimer > 0) {
+                    lockoutTimer -= 100;
+                    showMessage(`Замок заблокирован: ${Math.ceil(lockoutTimer / 1000)}с`, 'locked');
+                    disableControls(); 
+                    gameLocked = true;
+                    if (lockoutTimer <= 0) {
+                        gameLocked = false;
+                        enableControls(); 
+                        showMessage("Замок снова доступен.");
+                    }
+                }
+            }, 100);
+        }
+
+        // --- Event Handlers ---
+
+        // Move paperclip left
+        moveLeftBtn.addEventListener('click', () => {
+            if (gameLocked || gameWon) return;
+            paperclipPosition = Math.max(0, paperclipPosition - 1);
+            updatePaperclipPosition();
+        });
+
+        // Move paperclip right
+        moveRightBtn.addEventListener('click', () => {
+            if (gameLocked || gameWon) return;
+            paperclipPosition = Math.min(numPins - 1, paperclipPosition + 1);
+            updatePaperclipPosition();
+        });
+
+        // Lift pin
+        liftPinBtn.addEventListener('click', () => {
+            if (gameLocked || gameWon) return;
+            const currentPin = pins[paperclipPosition];
+            const currentPinEl = pinElements[paperclipPosition];
+
+            if (currentPin.isSet) {
+                showMessage("Этот пин уже установлен!");
+                return;
+            }
+
+            // Check if tension is in the sweet spot for the current pin
+            const inSweetSpot = tension >= currentPin.sweetSpotMin && tension <= currentPin.sweetSpotMax;
+            if (!inSweetSpot) {
+                showMessage("Натяжение не в нужной точке для этого пина!", 'locked');
+                resetLockAttempt(); // Automatic reset on incorrect tension
+                return;
+            }
+
+            // Increase pin height based on hardness
+            currentPin.currentHeight += PIN_LIFT_AMOUNT * currentPin.hardness;
+            currentPin.currentHeight = Math.min(currentPin.currentHeight, MAX_PIN_HEIGHT);
+            currentPinEl.style.height = `${currentPin.currentHeight}%`;
+
+            // Provide visual feedback based on proximity to target height
+            const diff = Math.abs(currentPin.currentHeight - currentPin.targetHeight);
+            if (diff < PIN_TOLERANCE * 2) {
+                currentPinEl.style.backgroundColor = '#68d391';
+            } else if (diff < PIN_TOLERANCE * 5) {
+                currentPinEl.style.backgroundColor = '#f6e05e';
+            } else {
+                currentPinEl.style.backgroundColor = '#cbd5e0';
+            }
+
+            // Check if pin is correctly set
+            if (currentPin.currentHeight >= currentPin.targetHeight - PIN_TOLERANCE && currentPin.currentHeight <= currentPin.targetHeight + PIN_TOLERANCE) {
+                currentPin.isSet = true;
+                currentPinEl.classList.add('set');
+                currentPinEl.style.height = `${currentPin.targetHeight}%`;
+                showMessage(`Пин ${paperclipPosition + 1} установлен!`);
+                checkAllPinsSet(); // Check if all pins are set
+            } else if (currentPin.currentHeight > currentPin.targetHeight + (PIN_TOLERANCE * 5)) {
+                showMessage("Слишком высоко! Замок сброшен.", 'locked');
+                resetLockAttempt(); // Automatic reset on lifting too high
+            }
+        });
+
+        let isApplyingTension = false;
+        applyTensionBtn.addEventListener('mousedown', () => {
+            if (gameLocked || gameWon) return;
+            isApplyingTension = true;
+            tensionLoop();
+        });
+        applyTensionBtn.addEventListener('mouseup', () => {
+            isApplyingTension = false;
+            updateTensionBar();
+        });
+        applyTensionBtn.addEventListener('mouseleave', () => {
+            isApplyingTension = false;
+            updateTensionBar();
+        });
+        // Touch event listeners for mobile responsiveness
+        applyTensionBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling on touch
+            if (gameLocked || gameWon) return;
+            isApplyingTension = true;
+            tensionLoop();
+        });
+        applyTensionBtn.addEventListener('touchend', () => {
+            isApplyingTension = false;
+            updateTensionBar();
+        });
+
+
+        // Tension application loop
+        let tensionInterval;
+        function tensionLoop() {
+            if (tensionInterval) clearInterval(tensionInterval);
+            tensionInterval = setInterval(() => {
+                if (isApplyingTension && !gameLocked && !gameWon) {
+                    tension = Math.min(MAX_TENSION, tension + TENSION_INCREASE_RATE);
+                    updateTensionBar();
+                    // Lockout only if tension reaches MAX_TENSION
+                    if (tension >= MAX_TENSION) { 
+                        showMessage("Слишком резкое натяжение! Замок заблокирован.", 'locked');
+                        resetLockAttempt(); // Automatic reset on tension overload
+                        lockoutTimer = LOCKOUT_DURATION;
+                        isApplyingTension = false;
+                        clearInterval(tensionInterval);
+                    }
+                } else {
+                    clearInterval(tensionInterval);
+                }
+            }, 100);
+        }
+
+
+        // Resets the current attempt on the same lock configuration
+        function resetLockAttempt() {
+            pins.forEach((pin, index) => {
+                pin.currentHeight = MIN_PIN_HEIGHT;
+                pin.isSet = false; // Reset set status
+                pinElements[index].style.height = `${MIN_PIN_HEIGHT}%`;
+                pinElements[index].style.backgroundColor = '#cbd5e0'; // Reset color
+                pinElements[index].classList.remove('set'); // Remove 'set' class
+            });
+            tension = 0;
+            updateTensionBar();
+        }
+
+        // Checks if all pins are set and enables the "Open Lock" button
+        function checkAllPinsSet() {
+            const allPinsAreSet = pins.every(pin => pin.isSet);
+            if (allPinsAreSet) {
+                showMessage("Все пины установлены! Нажмите 'Открыть Замок'.", 'win');
+                disableControls(); // Disable regular controls
+                openLockBtn.style.display = 'block'; // Show the button
+                openLockBtn.disabled = false; // Enable the button
+            }
+        }
+
+        // Function to handle opening the lock (triggers animation)
+        function openLock() {
+            gameWon = true; // Set gameWon to true
+            showMessage("Замок открыт!", 'win'); // Set initial message for animation
+            messageBox.classList.add('win-animation'); // Add animation class
+            disableControls(); // Ensure all controls are disabled during animation
+
+            // After animation, display final message and keep controls disabled
+            setTimeout(() => {
+                messageBox.classList.remove('win-animation'); // Remove animation class
+                messageBox.textContent = "Замок открыт! Обновите страницу, чтобы начать новую игру."; // Final message
+                // Controls remain disabled
+            }, WIN_ANIMATION_DURATION);
+        }
+
+        // Event listener for the "Open Lock" button
+        openLockBtn.addEventListener('click', openLock);
+
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (gameLocked || gameWon) return; // Prevent actions if locked or won
+            switch (e.key) {
+                case 'ArrowLeft':
+                    moveLeftBtn.click();
+                    break;
+                case 'ArrowRight':
+                    moveRightBtn.click();
+                    break;
+                case 'ArrowUp':
+                    liftPinBtn.click();
+                    break;
+                case ' ': // Spacebar for tension
+                    if (!isApplyingTension) {
+                        applyTensionBtn.dispatchEvent(new MouseEvent('mousedown'));
+                    }
+                    e.preventDefault(); // Prevent page scrolling when spacebar is pressed
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === ' ') {
+                applyTensionBtn.dispatchEvent(new MouseEvent('mouseup'));
+            }
+        });
+
+        // Initial setup on window load
+        window.onload = function() {
+            initializeGame();
+            startGameLoop();
+            // Adjust paperclip position on window resize for responsiveness
+            window.addEventListener('resize', updatePaperclipPosition);
+        };
+
+    </script>
+</body>
+</html>
