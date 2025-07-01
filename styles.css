@@ -357,6 +357,8 @@ nav button.active {
 .resources {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap; /* Добавлено для мобильной адаптации */
+  justify-content: flex-end; /* Добавлено для мобильной адаптации */
 }
 .resource {
   padding: 8px 15px;
@@ -380,6 +382,7 @@ nav button.active {
   gap: 15px;
   align-items: center;
   margin-bottom: 15px;
+  flex-wrap: wrap; /* Добавлено для мобильной адаптации */
 }
 .client-portrait {
   width: 60px;
@@ -392,6 +395,7 @@ nav button.active {
   justify-content: center;
   font-size: 1.8rem;
   font-weight: bold;
+  flex-shrink: 0; /* Добавлено для мобильной адаптации */
 }
 .client-details h3 {
   margin: 0;
@@ -593,14 +597,11 @@ nav button.active {
 }
 .office-image {
   height: 150px;
-  background-size: cover;
-  background-position: center;
+  background-size: contain; /* Изменено на contain */
+  background-repeat: no-repeat; /* Добавлено */
+  background-position: center; /* Добавлено */
   border-radius: 8px;
   border: 2px solid #ffcc33;
-}
-.office-info h3 {
-  margin-top: 0;
-  color: #ffcc33;
 }
 .max-level {
   color: #4caf50;
@@ -635,11 +636,11 @@ nav button.active {
   animation: slideIn 0.3s ease-out;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
-.event.inflation, .event.crisis {
+.event.inflation, .event.crisis, .event.scandal { /* Added scandal */
   background: rgba(244, 67, 54, 0.9);
   border: 1px solid #d32f2f;
 }
-.event.boom, .event.viral {
+.event.boom, .event.viral, .event.investment { /* Added investment */
   background: rgba(76, 175, 80, 0.9);
   border: 1px solid #388e3c;
 }
@@ -1537,8 +1538,8 @@ kbd {
     font-weight: 500;
     text-align: center;
     flex-shrink: 0;
-    width: 120px; /* MODIFIED: Reduced width */
-    height: 80px; /* MODIFIED: Reduced height */
+    width: 80px; /* MODIFIED: Reduced width further for A4 ratio */
+    height: 113px; /* MODIFIED: Reduced height further for A4 ratio */
     box-sizing: border-box;
     position: absolute;
     display: flex;
@@ -1583,8 +1584,8 @@ kbd {
     border: 1px solid #a7f3d0;
     border-radius: 8px; /* More rounded */
     padding: 10px 15px;
-    width: 120px; /* Same size as non-stapled pages */
-    height: 80px;
+    width: 80px; /* Same size as non-stapled pages */
+    height: 113px;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     font-size: 0.75rem;
@@ -1606,7 +1607,7 @@ kbd {
     pointer-events: none;
 }
 
-.coursework-stapler-button {
+.coursework-stapler-button { /* Renamed to be more generic for "stitch" button */
     background: linear-gradient(to right, #34d399, #10b981); /* Gradient background */
     color: white;
     padding: 15px 30px; /* Larger padding */
@@ -1652,7 +1653,7 @@ kbd {
 }
 
 
-.coursework-stapler-jammed-text {
+.coursework-stapler-jammed-text { /* Renamed to be more generic for "thread tangled" */
     color: #ef4444;
     font-weight: 700; /* Bolder */
     margin-top: 8px;
@@ -1822,7 +1823,7 @@ kbd {
 }
 
 .wind-active .coursework-pages-container {
-    animation: wind-effect 0.4s infinite alternate; /* Faster, more noticeable wind */
+    /* Animation removed here as it's now handled by JS for continuous drift */
 }
 
 /* Alert Message Styles */
@@ -1881,8 +1882,8 @@ kbd {
     }
 
     .coursework-page {
-        width: 120px; /* Smaller width for mobile */
-        height: 80px; /* Smaller height for mobile */
+        width: 80px; /* Smaller width for mobile */
+        height: 113px; /* Smaller height for mobile */
         font-size: 0.75rem; /* Smaller font for mobile */
         padding: 6px 10px;
         border-radius: 5px;
@@ -2045,4 +2046,176 @@ kbd {
     .lock-button-tension {
         font-size: 0.9rem; /* Even smaller font for tension text */
     }
+
+    /* Marketing Game Mobile Styles */
+    .marketing-container {
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .career-info {
+        position: static;
+        margin-bottom: 5px;
+    }
+
+    .day-counter {
+        margin-left: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .resources {
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .resource {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        min-width: 60px;
+    }
+
+    .client-card {
+        padding: 10px;
+    }
+
+    .client-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .client-details h3 {
+        font-size: 1rem;
+    }
+
+    .client-details p {
+        font-size: 0.8rem;
+    }
+
+    .client-portrait {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .client-request {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+
+    .actions-container {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+
+    .marketing-action {
+        padding: 10px;
+    }
+
+    .action-name {
+        font-size: 0.9rem;
+    }
+
+    .action-cost {
+        font-size: 0.9rem;
+    }
+
+    .action-effect {
+        font-size: 0.75rem;
+    }
+
+    .progress-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .progress-section {
+        padding: 10px;
+    }
+
+    .progress-section h3 {
+        font-size: 1.1rem;
+    }
+
+    .progress-bar {
+        grid-template-columns: 80px 1fr 40px;
+        gap: 5px;
+    }
+
+    .progress-label, .progress-value {
+        font-size: 0.8rem;
+    }
+
+    .skill-name, .skill-level {
+        font-size: 0.85rem;
+    }
+
+    .office-view {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .office-image {
+        height: 120px;
+    }
+
+    .office-info h3 {
+        font-size: 1.1rem;
+    }
+
+    .talent-tree-section .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .modal-content {
+        margin: 10% auto;
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .talent-branch h3 {
+        font-size: 1.2rem;
+    }
+
+    .talent-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+
+    .talent-details h4 {
+        font-size: 0.9rem;
+    }
+
+    .talent-details p {
+        font-size: 0.75rem;
+    }
 }
+
+/* New style for the text background in welcome screen */
+.welcome-content .text-background {
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black */
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ffcc33;
+}
+
+.welcome-content .text-background p {
+  margin: 5px 0; /* Adjust spacing for paragraphs inside */
+}
+

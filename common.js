@@ -123,7 +123,7 @@ function showBoxAnimation(boxNumber) {
     "Открой коробку 4!"
   ];
   
-  boxAnimation.textContent = `🎉 ${boxMessages[boxNumber-1]} открыта!`;
+  boxAnimation.textContent = `🎉 ${boxMessages[boxNumber-1]}`;
   boxAnimation.style.display = 'block';
   
   setTimeout(() => {

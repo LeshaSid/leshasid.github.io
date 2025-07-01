@@ -97,11 +97,12 @@ const room246Game = (() => {
     timerInterval: null,
     timeLeft: 150, // 2 minutes 30 seconds
     stapledPages: [], // Stores {id, order} of pages in the stapling panel
-    staplerJammed: false,
-    staplerClicksRemaining: 0,
+    threadTangled: false, // NEW: Replaced staplerJammed
+    untangleClicksRemaining: 0, // NEW: Replaced staplerClicksRemaining
     professorCallActive: false,
     correctProfessorPageId: null,
     windActive: false,
+    windInterval: null, // NEW: For continuous wind effect
     nextInterferenceTimeoutId: null,
     // NEW Drag and Drop state
     draggedElement: null, 
@@ -354,6 +355,14 @@ const room246Game = (() => {
 
     if (!minigameContainer || !gameScreen || !infoPanel || !inventoryBar || !gameTimer || !dialogBox) return;
 
+    // Block page scrolling only for mobile devices when starting this specific minigame
+    if (minigameId === 'stitching' && /Mobi|Android/i.test(navigator.userAgent)) {
+        document.body.style.overflow = 'hidden';
+    } else if (minigameId === 'lockpicking') { // Lockpicking also blocks scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+
     gameScreen.style.display = 'none';
     infoPanel.style.display = 'none';
     inventoryBar.style.display = 'none';
@@ -370,6 +379,7 @@ const room246Game = (() => {
             infoPanel.style.display = 'block';
             inventoryBar.style.display = 'flex'; // Assuming inventory is flex
             gameTimer.style.display = 'block'; // Show main game timer
+            document.body.style.overflow = ''; // Re-enable scrolling
             return;
         }
         // Lockpicking Minigame HTML
@@ -419,6 +429,7 @@ const room246Game = (() => {
             infoPanel.style.display = 'block';
             inventoryBar.style.display = 'flex';
             gameTimer.style.display = 'block'; // Show main game timer
+            document.body.style.overflow = ''; // Re-enable scrolling
             return;
         }
         // Coursework Filing Minigame HTML
@@ -440,8 +451,8 @@ const room246Game = (() => {
                     <div id="stapling-panel" class="coursework-stapling-panel">
                         <p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>
                         </div>
-                    <button id="stapler-button" class="coursework-stapler-button" disabled>Подшить!</button>
-                    <p id="stapler-jammed-message" class="coursework-stapler-jammed-text hidden">Степлер заело! Нажми ещё <span id="stapler-clicks-needed"></span> раз(а)!</p>
+                    <button id="stitch-button" class="coursework-stapler-button" disabled>Подшить!</button>
+                    <p id="thread-tangled-message" class="coursework-stapler-jammed-text hidden">Нить запуталась! Нажми ещё <span id="untangle-clicks-needed"></span> раз(а)!</p>
                 </div>
 
                 <button id="start-button" class="coursework-stapler-button mt-4 mx-auto block">Начать игру</button>
@@ -656,6 +667,7 @@ const room246Game = (() => {
     document.removeEventListener('keydown', handleLockpickingKeydown);
     document.removeEventListener('keyup', handleLockpickingKeyup);
     document.getElementById('minigame-container').removeAttribute('dataset.activeGame');
+    document.body.style.overflow = ''; // Re-enable scrolling
   }
 
   function updatePaperclipPosition() {
@@ -912,7 +924,7 @@ const room246Game = (() => {
       }
   
       updateStapledCountCoursework();
-      checkStaplerReadyCoursework();
+      checkStitchButtonReadyCoursework(); // Updated function name
   
       courseworkGame.isDragging = false;
       courseworkGame.draggedElement = null;
@@ -927,7 +939,7 @@ const room246Game = (() => {
     // Game elements
     const pagesContainer = document.getElementById('pages-container');
     const staplingPanel = document.getElementById('stapling-panel');
-    const staplerButton = document.getElementById('stapler-button');
+    const stitchButton = document.getElementById('stitch-button'); // Renamed stapler-button
     const startButton = document.getElementById('start-button');
     const restartButton = document.getElementById('restart-button');
     const timerDisplay = document.getElementById('timer');
@@ -937,15 +949,15 @@ const room246Game = (() => {
     const professorQuestion = document.getElementById('professor-question');
     const professorPopupOkButton = document.getElementById('professor-popup-ok');
     const gameEndScreen = document.getElementById('game-end-screen');
-    const staplerJammedMessage = document.getElementById('stapler-jammed-message');
-    const staplerClicksNeededDisplay = document.getElementById('stapler-clicks-needed');
+    const threadTangledMessage = document.getElementById('thread-tangled-message'); // Renamed stapler-jammed-message
+    const untangleClicksNeededDisplay = document.getElementById('untangle-clicks-needed'); // Renamed stapler-clicks-needed
 
     // Reset game state variables
     courseworkGame.gameStarted = false;
     courseworkGame.timeLeft = 150;
     courseworkGame.stapledPages = [];
-    courseworkGame.staplerJammed = false;
-    courseworkGame.staplerClicksRemaining = 0;
+    courseworkGame.threadTangled = false; // Reset thread tangled state
+    courseworkGame.untangleClicksRemaining = 0; // Reset untangle clicks
     courseworkGame.professorCallActive = false;
     courseworkGame.correctProfessorPageId = null;
     courseworkGame.windActive = false;
@@ -955,12 +967,13 @@ const room246Game = (() => {
 
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
+    if (courseworkGame.windInterval) clearInterval(courseworkGame.windInterval); // Clear wind interval
 
     timerDisplay.textContent = formatTimeCoursework(courseworkGame.timeLeft);
     stapledCountDisplay.textContent = 0;
     totalPagesDisplay.textContent = courseworkGame.pagesData.length;
-    staplerButton.disabled = true;
-    staplerJammedMessage.classList.add('hidden');
+    stitchButton.disabled = true;
+    threadTangledMessage.classList.add('hidden');
     professorPopupOverlay.classList.remove('active');
     gameEndScreen.classList.remove('active');
     pagesContainer.classList.remove('wind-active');
@@ -975,7 +988,7 @@ const room246Game = (() => {
 
     startButton.style.display = 'block';
     restartButton.style.display = 'none';
-    staplerButton.textContent = 'Подшить!';
+    stitchButton.textContent = 'Подшить!';
 
     // Re-attach listeners for Coursework Filing game
     startButton.onclick = () => {
@@ -987,25 +1000,28 @@ const room246Game = (() => {
 
     restartButton.onclick = () => initCourseworkGame();
 
-    staplerButton.onclick = () => {
+    stitchButton.onclick = () => { // Updated button variable
         if (!courseworkGame.gameStarted || courseworkGame.professorCallActive) return;
 
-        staplerButton.classList.add('clicked');
+        stitchButton.classList.add('clicked');
         setTimeout(() => {
-            staplerButton.classList.remove('clicked');
+            stitchButton.classList.remove('clicked');
         }, 100);
 
-        if (courseworkGame.staplerJammed) {
-            courseworkGame.staplerClicksRemaining--;
-            staplerClicksNeededDisplay.textContent = courseworkGame.staplerClicksRemaining;
-            if (courseworkGame.staplerClicksRemaining <= 0) {
-                courseworkGame.staplerJammed = false;
-                staplerJammedMessage.classList.add('hidden');
-                checkStaplerReadyCoursework();
-                staplerButton.textContent = 'Подшить!';
+        if (courseworkGame.threadTangled) { // Updated logic for thread tangling
+            courseworkGame.untangleClicksRemaining--;
+            // Update text immediately
+            document.getElementById('untangle-clicks-needed').textContent = courseworkGame.untangleClicksRemaining;
+            stitchButton.textContent = `Распутать нить! (${courseworkGame.untangleClicksRemaining} раз)`;
+
+            if (courseworkGame.untangleClicksRemaining <= 0) {
+                courseworkGame.threadTangled = false;
+                threadTangledMessage.classList.add('hidden');
+                checkStitchButtonReadyCoursework(); // Updated function name
+                showFeedback('Нить распутана!', 'success');
             }
         } else {
-            performStaplingCoursework();
+            performStaplingCoursework(); // This will now be stitching
         }
     };
 
@@ -1023,6 +1039,7 @@ const room246Game = (() => {
   function cleanupCourseworkGame() {
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
+    if (courseworkGame.windInterval) clearInterval(courseworkGame.windInterval); // Clear wind interval
     
     document.removeEventListener('mousemove', onDragMoveCoursework);
     document.removeEventListener('touchmove', onDragMoveCoursework);
@@ -1030,6 +1047,7 @@ const room246Game = (() => {
     document.removeEventListener('touchend', onDragEndCoursework);
 
     document.getElementById('minigame-container').removeAttribute('dataset.activeGame');
+    document.body.style.overflow = ''; // Re-enable scrolling
   }
 
   function createPagesCoursework() {
@@ -1099,13 +1117,26 @@ const room246Game = (() => {
     }, 1000);
   }
 
-  function checkStaplerReadyCoursework() {
-    const staplerButton = document.getElementById('stapler-button');
-    if (!staplerButton) return;
-    staplerButton.disabled = !(courseworkGame.stapledPages.length > 0 && !courseworkGame.staplerJammed);
+  function checkStitchButtonReadyCoursework() { // Renamed function
+    const stitchButton = document.getElementById('stitch-button'); // Renamed variable
+    if (!stitchButton) return;
+
+    if (courseworkGame.professorCallActive) {
+        stitchButton.disabled = true;
+        stitchButton.textContent = 'Ожидание ответа профессора...'; // Added specific text
+        return;
+    }
+
+    if (courseworkGame.threadTangled) { // Updated logic for thread tangling
+        stitchButton.disabled = false; // Enable to untangle
+        stitchButton.textContent = `Распутать нить! (${courseworkGame.untangleClicksRemaining} раз)`; // Updated button text
+    } else {
+        stitchButton.disabled = (courseworkGame.stapledPages.length === 0 || courseworkGame.stapledPages.length !== courseworkGame.pagesData.length); // Disable if no pages or not all pages are in panel
+        stitchButton.textContent = 'Подшить!'; // Reset text
+    }
   }
 
-  function performStaplingCoursework() {
+  function performStaplingCoursework() { // This function now represents stitching
     const staplingPanel = document.getElementById('stapling-panel');
     const pagesContainer = document.getElementById('pages-container');
     if (!staplingPanel || !pagesContainer) return;
@@ -1134,7 +1165,7 @@ const room246Game = (() => {
         courseworkGame.stapledPages = [];
         staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
         updateStapledCountCoursework();
-        checkStaplerReadyCoursework();
+        checkStitchButtonReadyCoursework(); // Updated function name
     }
   }
 
@@ -1152,7 +1183,7 @@ const room246Game = (() => {
 
     switch (interferenceType) {
         case 0: activateWindCoursework(); break;
-        case 1: activateStaplerJamCoursework(); break;
+        case 1: activateThreadTangleCoursework(); break; // Renamed function
         case 2: activateProfessorCallCoursework(); break;
     }
     courseworkGame.nextInterferenceTimeoutId = setTimeout(triggerInterferenceCoursework, Math.random() * 20000 + 10000);
@@ -1161,30 +1192,54 @@ const room246Game = (() => {
   function activateWindCoursework() {
     const pagesContainer = document.getElementById('pages-container');
     if (!pagesContainer || courseworkGame.windActive) return;
+    
     courseworkGame.windActive = true;
     pagesContainer.classList.add('wind-active');
-    randomizePagePositionsCoursework();
-
     showFeedback('Ветер! Страницы перемешались!', 'info');
+
+    // Start continuous random movement
+    courseworkGame.windInterval = setInterval(() => {
+        const pages = Array.from(pagesContainer.children).filter(el => el.classList.contains('coursework-page'));
+        pages.forEach(page => {
+            const currentX = parseFloat(page.style.left) || 0;
+            const currentY = parseFloat(page.style.top) || 0;
+            const containerRect = pagesContainer.getBoundingClientRect();
+            const pageRect = page.getBoundingClientRect();
+            const padding = 10;
+
+            let newX = currentX + (Math.random() * 6 - 3); // -3 to 3 pixels horizontal drift
+            let newY = currentY + (Math.random() * 6 - 3); // -3 to 3 pixels vertical drift
+
+            // Keep pages within bounds
+            newX = Math.max(padding, Math.min(newX, containerRect.width - pageRect.width - padding));
+            newY = Math.max(padding, Math.min(newY, containerRect.height - pageRect.height - padding));
+
+            page.style.left = `${newX}px`;
+            page.style.top = `${newY}px`;
+            page.style.transform = `rotate(${Math.random() * 6 - 3}deg)`;
+        });
+    }, 100); // Update position every 100ms
+
     setTimeout(() => {
         pagesContainer.classList.remove('wind-active');
         courseworkGame.windActive = false;
-    }, 3000);
+        if (courseworkGame.windInterval) clearInterval(courseworkGame.windInterval); // Stop movement
+        showFeedback('Ветер стих.', 'info');
+    }, 5000); // Wind lasts for 5 seconds
   }
 
-  function activateStaplerJamCoursework() {
-    const staplerJammedMessage = document.getElementById('stapler-jammed-message');
-    const staplerClicksNeededDisplay = document.getElementById('stapler-clicks-needed');
-    const staplerButton = document.getElementById('stapler-button');
-    if (!staplerJammedMessage || !staplerClicksNeededDisplay || !staplerButton || courseworkGame.staplerJammed) return;
+  function activateThreadTangleCoursework() { // Renamed function
+    const threadTangledMessage = document.getElementById('thread-tangled-message'); // Renamed variable
+    const untangleClicksNeededDisplay = document.getElementById('untangle-clicks-needed'); // Renamed variable
+    const stitchButton = document.getElementById('stitch-button'); // Renamed variable
+    if (!threadTangledMessage || !untangleClicksNeededDisplay || !stitchButton || courseworkGame.threadTangled) return;
 
-    courseworkGame.staplerJammed = true;
-    courseworkGame.staplerClicksRemaining = Math.floor(Math.random() * 3) + 2;
-    staplerJammedMessage.classList.remove('hidden');
-    staplerClicksNeededDisplay.textContent = courseworkGame.staplerClicksRemaining;
-    staplerButton.disabled = false; // Must be enabled to un-jam
-    staplerButton.textContent = 'Починить!';
-    showFeedback('Степлер заело!', 'error');
+    courseworkGame.threadTangled = true;
+    courseworkGame.untangleClicksRemaining = Math.floor(Math.random() * 3) + 2; // 2-4 clicks to untangle
+    threadTangledMessage.classList.remove('hidden');
+    untangleClicksNeededDisplay.textContent = courseworkGame.untangleClicksRemaining;
+    showFeedback('Нить запуталась!', 'error');
+    checkStitchButtonReadyCoursework(); // Call to update button state and text
   }
 
   function activateProfessorCallCoursework() {
@@ -1252,6 +1307,8 @@ const room246Game = (() => {
     courseworkGame.gameStarted = false;
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
+    if (courseworkGame.windInterval) clearInterval(courseworkGame.windInterval); // Clear wind interval
+    
     const gameEndScreen = document.getElementById('game-end-screen');
     const endTitle = document.getElementById('end-title');
     const endMessage = document.getElementById('end-message');
@@ -1311,6 +1368,7 @@ const room246Game = (() => {
         `<button class="btn" onclick="room246Game.completeRoom246Game()">Завершить и открыть главный подарок!</button>` : 
         `<button class="btn" onclick="room246Game.initRoom246Game()">Попробовать снова</button>`}
     `;
+    document.body.style.overflow = ''; // Re-enable scrolling
   }
   
   function showFeedback(message, type = "info") {
