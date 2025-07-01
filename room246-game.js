@@ -97,16 +97,17 @@ const room246Game = (() => {
     timerInterval: null,
     timeLeft: 150, // 2 minutes 30 seconds
     stapledPages: [], // Stores {id, order} of pages in the stapling panel
-    currentPageOrder: [], // Used for checking order during stapling
     staplerJammed: false,
     staplerClicksRemaining: 0,
     professorCallActive: false,
     correctProfessorPageId: null,
     windActive: false,
     nextInterferenceTimeoutId: null,
-    draggedElement: null, // Unified variable for the currently dragged DOM element
-    initialTouchX: 0, // Initial touch X for dragging
-    initialTouchY: 0, // Initial touch Y for dragging
+    // NEW Drag and Drop state
+    draggedElement: null, 
+    isDragging: false,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
     pagesData: [
       { id: 'page-title', name: 'Заголовок', order: 0 },
       { id: 'page-contents', name: 'Оглавление', order: 1 },
@@ -375,15 +376,14 @@ const room246Game = (() => {
         minigameContainer.innerHTML = `
             <div class="game-container">
                 <h1>Взлом замка скрепкой</h1>
-                <p>
+                <p class="minigame-description">
                     Цель: Открыть замок, правильно поднимая пины.
-                    Используйте &larr; &rarr; для перемещения скрепки, &uarr; для поднятия пина, и <kbd>Пробел</kbd> для натяжения.
                     <br>
-                    Чтобы поднять пин, натяжение должно быть в его "идеальной точке" (индикатор натяжения станет фиолетовым). Замок блокируется только при максимальном натяжении.
+                    Используйте кнопки для перемещения скрепки и поднятия пина. Удерживайте "Натяжение" для применения силы.
+                    Натяжение должно быть в "идеальной точке" (индикатор натяжения станет фиолетовым). Замок блокируется только при максимальном натяжении.
                 </p>
 
                 <div class="lock-mechanism" id="lockMechanism">
-                    <!-- Pins will be dynamically added here by JavaScript -->
                     <div class="paperclip" id="paperclip">
                         <div class="paperclip-tip"></div>
                     </div>
@@ -392,17 +392,19 @@ const room246Game = (() => {
                 <div class="tension-indicator-container">
                     <div class="tension-bar" id="tensionBar"></div>
                 </div>
-                <p class="text-sm text-center mt-2 text-gray-400">Натяжение пружины (удерживайте Пробел)</p>
+                <p class="text-sm text-center mt-2 text-gray-400">Натяжение пружины (удерживайте кнопку)</p>
 
                 <div class="message-box" id="messageBox">
                     Начните взлом!
                 </div>
 
-                <div class="controls">
-                    <button class="control-button" id="moveLeftBtn">&larr; Влево</button>
-                    <button class="control-button" id="liftPinBtn">&uarr; Поднять Пин</button>
-                    <button class="control-button" id="moveRightBtn">&rarr; Вправо</button>
-                    <button class="control-button" id="applyTensionBtn">Натяжение</button>
+                <div class="controls lockpicking-controls">
+                    <button class="control-button lock-button-up" id="liftPinBtn" aria-label="Поднять Пин"></button>
+                    <div class="horizontal-controls">
+                        <button class="control-button lock-button-left" id="moveLeftBtn" aria-label="Влево"></button>
+                        <button class="control-button lock-button-tension" id="applyTensionBtn" aria-label="Натяжение"></button>
+                        <button class="control-button lock-button-right" id="moveRightBtn" aria-label="Вправо"></button>
+                    </div>
                 </div>
                 <button class="control-button reset-button" id="openLockBtn" style="display: none;">Открыть Замок</button>
             </div>
@@ -434,19 +436,16 @@ const room246Game = (() => {
 
                 <div class="coursework-game-area">
                     <div id="pages-container" class="coursework-pages-container">
-                        <!-- Pages will be dynamically loaded here by JS -->
-                    </div>
+                        </div>
                     <div id="stapling-panel" class="coursework-stapling-panel">
                         <p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>
-                        <!-- Stapled pages will appear here -->
-                    </div>
+                        </div>
                     <button id="stapler-button" class="coursework-stapler-button" disabled>Подшить!</button>
                     <p id="stapler-jammed-message" class="coursework-stapler-jammed-text hidden">Степлер заело! Нажми ещё <span id="stapler-clicks-needed"></span> раз(а)!</p>
                 </div>
 
                 <button id="start-button" class="coursework-stapler-button mt-4 mx-auto block">Начать игру</button>
 
-                <!-- Professor's Call Pop-up -->
                 <div id="professor-popup-overlay" class="coursework-popup-overlay">
                     <div class="coursework-popup-content">
                         <h3>Звонок от препода!</h3>
@@ -455,7 +454,6 @@ const room246Game = (() => {
                     </div>
                 </div>
 
-                <!-- Game End Screen -->
                 <div id="game-end-screen" class="coursework-game-end-screen">
                     <h2 id="end-title"></h2>
                     <p id="end-message"></p>
@@ -690,7 +688,7 @@ const room246Game = (() => {
         if (lockpickGame.tension >= lockpickGame.TENSION_OVERLOAD_THRESHOLD) {
             tensionBar.style.backgroundColor = '#e53e3e'; // Red
         } else if (lockpickGame.tension > lockpickGame.MAX_TENSION / 2) {
-            tensionBar.style.backgroundColor = '#f6ad55'; // Orange
+            tensionBar.style.backgroundColor = '#f6ad5e'; // Orange
         } else {
             tensionBar.style.backgroundColor = '#48bb78'; // Green
         }
@@ -710,16 +708,16 @@ const room246Game = (() => {
   }
 
   function disableLockpickingControls() {
-    document.getElementById('moveLeftBtn').disabled = true;
     document.getElementById('liftPinBtn').disabled = true;
+    document.getElementById('moveLeftBtn').disabled = true;
     document.getElementById('moveRightBtn').disabled = true;
     document.getElementById('applyTensionBtn').disabled = true;
     document.getElementById('openLockBtn').disabled = true;
   }
 
   function enableLockpickingControls() {
-    document.getElementById('moveLeftBtn').disabled = false;
     document.getElementById('liftPinBtn').disabled = false;
+    document.getElementById('moveLeftBtn').disabled = false;
     document.getElementById('moveRightBtn').disabled = false;
     document.getElementById('applyTensionBtn').disabled = false;
     document.getElementById('openLockBtn').disabled = true;
@@ -827,6 +825,104 @@ const room246Game = (() => {
   }
 
   // --- Coursework Filing Minigame Logic ---
+  // NEW: Unified Drag and Drop handler functions
+  function onDragStartCoursework(event) {
+      if (!courseworkGame.gameStarted || courseworkGame.professorCallActive) return;
+  
+      const target = event.target.closest('.coursework-page, .coursework-stapled-page');
+      if (!target) return;
+  
+      event.preventDefault();
+  
+      courseworkGame.draggedElement = target;
+      courseworkGame.isDragging = true;
+  
+      const rect = target.getBoundingClientRect();
+      const touch = event.touches ? event.touches[0] : event;
+  
+      courseworkGame.dragOffsetX = touch.clientX - rect.left;
+      courseworkGame.dragOffsetY = touch.clientY - rect.top;
+  
+      target.classList.add('dragging');
+      target.style.position = 'fixed';
+      target.style.zIndex = '1001';
+      
+      onDragMoveCoursework(event);
+  
+      document.addEventListener('mousemove', onDragMoveCoursework);
+      document.addEventListener('touchmove', onDragMoveCoursework, { passive: false });
+      document.addEventListener('mouseup', onDragEndCoursework);
+      document.addEventListener('touchend', onDragEndCoursework);
+  }
+  
+  function onDragMoveCoursework(event) {
+      if (!courseworkGame.isDragging || !courseworkGame.draggedElement) return;
+  
+      event.preventDefault();
+  
+      const touch = event.touches ? event.touches[0] : event;
+      const element = courseworkGame.draggedElement;
+      
+      let newX = touch.clientX - courseworkGame.dragOffsetX;
+      let newY = touch.clientY - courseworkGame.dragOffsetY;
+  
+      element.style.left = `${newX}px`;
+      element.style.top = `${newY}px`;
+  }
+  
+  function onDragEndCoursework(event) {
+      if (!courseworkGame.isDragging || !courseworkGame.draggedElement) return;
+  
+      const element = courseworkGame.draggedElement;
+      element.style.visibility = 'hidden';
+      const touch = event.changedTouches ? event.changedTouches[0] : event;
+      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+      element.style.visibility = 'visible';
+  
+      const pagesContainer = document.getElementById('pages-container');
+      const staplingPanel = document.getElementById('stapling-panel');
+  
+      element.classList.remove('dragging');
+      element.style.zIndex = '';
+  
+      const isDroppedOnStaplingPanel = staplingPanel.contains(dropTarget);
+  
+      if (isDroppedOnStaplingPanel) {
+          element.style.position = 'relative';
+          element.style.left = '';
+          element.style.top = '';
+          staplingPanel.appendChild(element);
+          element.classList.remove('coursework-page');
+          element.classList.add('coursework-stapled-page');
+          const placeholder = staplingPanel.querySelector('p');
+          if (placeholder) placeholder.remove();
+      } else {
+          element.style.position = 'absolute';
+          pagesContainer.appendChild(element);
+          element.classList.remove('coursework-stapled-page');
+          element.classList.add('coursework-page');
+          randomizePagePositionsForOneCoursework(element);
+      }
+      
+      courseworkGame.stapledPages = Array.from(staplingPanel.querySelectorAll('.coursework-stapled-page'))
+          .map(el => ({ id: el.id, order: parseInt(el.dataset.order) }));
+          
+      if (staplingPanel.querySelectorAll('.coursework-stapled-page').length === 0 && !staplingPanel.querySelector('p')) {
+          staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
+      }
+  
+      updateStapledCountCoursework();
+      checkStaplerReadyCoursework();
+  
+      courseworkGame.isDragging = false;
+      courseworkGame.draggedElement = null;
+  
+      document.removeEventListener('mousemove', onDragMoveCoursework);
+      document.removeEventListener('touchmove', onDragMoveCoursework);
+      document.removeEventListener('mouseup', onDragEndCoursework);
+      document.removeEventListener('touchend', onDragEndCoursework);
+  }
+
   function initCourseworkGame() {
     // Game elements
     const pagesContainer = document.getElementById('pages-container');
@@ -841,8 +937,6 @@ const room246Game = (() => {
     const professorQuestion = document.getElementById('professor-question');
     const professorPopupOkButton = document.getElementById('professor-popup-ok');
     const gameEndScreen = document.getElementById('game-end-screen');
-    const endTitle = document.getElementById('end-title');
-    const endMessage = document.getElementById('end-message');
     const staplerJammedMessage = document.getElementById('stapler-jammed-message');
     const staplerClicksNeededDisplay = document.getElementById('stapler-clicks-needed');
 
@@ -850,14 +944,14 @@ const room246Game = (() => {
     courseworkGame.gameStarted = false;
     courseworkGame.timeLeft = 150;
     courseworkGame.stapledPages = [];
-    courseworkGame.currentPageOrder = [];
     courseworkGame.staplerJammed = false;
     courseworkGame.staplerClicksRemaining = 0;
     courseworkGame.professorCallActive = false;
     courseworkGame.correctProfessorPageId = null;
     courseworkGame.windActive = false;
     courseworkGame.nextInterferenceTimeoutId = null;
-    courseworkGame.draggedElement = null; // Reset dragged element
+    courseworkGame.draggedElement = null; 
+    courseworkGame.isDragging = false;
 
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
@@ -871,12 +965,10 @@ const room246Game = (() => {
     gameEndScreen.classList.remove('active');
     pagesContainer.classList.remove('wind-active');
 
-    // Ensure stapling panel has its initial placeholder
     staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
-    pagesContainer.innerHTML = ''; // Clear pages container
+    pagesContainer.innerHTML = ''; 
 
     createPagesCoursework();
-    // Use requestAnimationFrame to ensure layout is ready before positioning
     requestAnimationFrame(() => {
         randomizePagePositionsCoursework();
     });
@@ -925,58 +1017,18 @@ const room246Game = (() => {
         removeAllProfessorClickListenersCoursework();
     };
 
-    // Add drag/drop and touch listeners for pagesContainer and staplingPanel
-    pagesContainer.addEventListener('dragover', (event) => event.preventDefault());
-    pagesContainer.addEventListener('drop', handlePagesContainerDropCoursework);
-    staplingPanel.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    });
-    staplingPanel.addEventListener('drop', handleStaplingPanelDropCoursework);
-
-    // Ensure cleanup when minigame ends
     minigameContainer.dataset.activeGame = 'stitching';
   }
 
   function cleanupCourseworkGame() {
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
-    // Remove specific listeners if they were added dynamically
-    const pagesContainer = document.getElementById('pages-container');
-    const staplingPanel = document.getElementById('stapling-panel');
-    const staplerButton = document.getElementById('stapler-button');
-    const startButton = document.getElementById('start-button');
-    const restartButton = document.getElementById('restart-button');
-    const professorPopupOkButton = document.getElementById('professor-popup-ok');
+    
+    document.removeEventListener('mousemove', onDragMoveCoursework);
+    document.removeEventListener('touchmove', onDragMoveCoursework);
+    document.removeEventListener('mouseup', onDragEndCoursework);
+    document.removeEventListener('touchend', onDragEndCoursework);
 
-    if (startButton) startButton.onclick = null;
-    if (restartButton) restartButton.onclick = null;
-    if (staplerButton) staplerButton.onclick = null;
-    if (professorPopupOkButton) professorPopupOkButton.onclick = null;
-
-    if (pagesContainer) {
-        pagesContainer.removeEventListener('dragover', (event) => event.preventDefault());
-        pagesContainer.removeEventListener('drop', handlePagesContainerDropCoursework);
-        pagesContainer.querySelectorAll('.coursework-page').forEach(pageElement => {
-            pageElement.removeEventListener('dragstart', handleDragStartCoursework);
-            pageElement.removeEventListener('dragend', handleDragEndCoursework);
-            pageElement.removeEventListener('touchstart', handleTouchStartCoursework);
-            pageElement.removeEventListener('touchmove', handleTouchMoveCoursework);
-            pageElement.removeEventListener('touchend', handleTouchEndCoursework);
-            pageElement.removeEventListener('click', handleProfessorPageClickCoursework);
-        });
-    }
-    if (staplingPanel) {
-        staplingPanel.removeEventListener('dragover', (event) => { event.preventDefault(); });
-        staplingPanel.removeEventListener('drop', handleStaplingPanelDropCoursework);
-        staplingPanel.querySelectorAll('.coursework-stapled-page').forEach(pageElement => {
-            pageElement.removeEventListener('dragstart', handleDragStartCoursework);
-            pageElement.removeEventListener('dragend', handleDragEndCoursework);
-            pageElement.removeEventListener('touchstart', handleTouchStartCoursework);
-            pageElement.removeEventListener('touchmove', handleTouchMoveCoursework);
-            pageElement.removeEventListener('touchend', handleTouchEndCoursework);
-        });
-    }
     document.getElementById('minigame-container').removeAttribute('dataset.activeGame');
   }
 
@@ -990,14 +1042,11 @@ const room246Game = (() => {
         pageElement.classList.add('coursework-page');
         pageElement.id = page.id;
         pageElement.textContent = page.name;
-        pageElement.draggable = true;
         pageElement.dataset.order = page.order;
 
-        pageElement.addEventListener('dragstart', handleDragStartCoursework);
-        pageElement.addEventListener('dragend', handleDragEndCoursework);
-        pageElement.addEventListener('touchstart', handleTouchStartCoursework);
-        pageElement.addEventListener('touchmove', handleTouchMoveCoursework);
-        pageElement.addEventListener('touchend', handleTouchEndCoursework);
+        pageElement.addEventListener('mousedown', onDragStartCoursework);
+        pageElement.addEventListener('touchstart', onDragStartCoursework, { passive: false });
+        pageElement.addEventListener('click', handleProfessorPageClickCoursework);
 
         pagesContainer.appendChild(pageElement);
     });
@@ -1006,40 +1055,26 @@ const room246Game = (() => {
   function randomizePagePositionsCoursework() {
     const pagesContainer = document.getElementById('pages-container');
     if (!pagesContainer) return;
-    const containerRect = pagesContainer.getBoundingClientRect();
-    // Ensure container has dimensions before trying to position
-    if (containerRect.width === 0 || containerRect.height === 0) {
-        setTimeout(randomizePagePositionsCoursework, 100); // Retry after a short delay
-        return;
-    }
-
     const pages = Array.from(pagesContainer.children);
+    pages.forEach(page => randomizePagePositionsForOneCoursework(page));
+  }
 
-    pages.forEach(page => {
-        const pageRect = page.getBoundingClientRect();
-        // Ensure page has dimensions
-        if (pageRect.width === 0 || pageRect.height === 0) {
-            return; // Skip if page size is not yet computed
-        }
+  function randomizePagePositionsForOneCoursework(pageElement) {
+    const pagesContainer = document.getElementById('pages-container');
+    if (!pagesContainer) return;
+    const containerRect = pagesContainer.getBoundingClientRect();
+    const pageRect = pageElement.getBoundingClientRect();
+    const padding = 10; // Padding from the edges
 
-        const padding = 20; // Padding from the edges of the container in pixels
-        
-        // Calculate maximum X and Y coordinates in pixels, respecting padding
-        const maxX_px = Math.max(0, containerRect.width - pageRect.width - padding * 2);
-        const maxY_px = Math.max(0, containerRect.height - pageRect.height - padding * 2);
+    const maxX = Math.max(0, containerRect.width - pageRect.width - padding * 2);
+    const maxY = Math.max(0, containerRect.height - pageRect.height - padding * 2);
 
-        // Generate random pixel positions within the allowed range
-        const randomX_px = Math.random() * maxX_px + padding;
-        const randomY_px = Math.random() * maxY_px + padding;
+    const randomX = Math.random() * maxX + padding;
+    const randomY = Math.random() * maxY + padding;
 
-        // Convert pixel positions to percentages relative to container dimensions
-        const randomX_percent = (randomX_px / containerRect.width) * 100;
-        const randomY_percent = (randomY_px / containerRect.height) * 100;
-
-        page.style.left = `${randomX_percent}%`;
-        page.style.top = `${randomY_percent}%`;
-        page.style.transform = `rotate(${Math.random() * 6 - 3}deg)`; // Random rotation for visual flair
-    });
+    pageElement.style.left = `${randomX}px`;
+    pageElement.style.top = `${randomY}px`;
+    pageElement.style.transform = `rotate(${Math.random() * 6 - 3}deg)`;
   }
 
   function formatTimeCoursework(seconds) {
@@ -1064,239 +1099,10 @@ const room246Game = (() => {
     }, 1000);
   }
 
-  function handleDragStartCoursework(event) {
-    if (!courseworkGame.gameStarted || courseworkGame.professorCallActive) {
-        event.preventDefault();
-        return;
-    }
-    courseworkGame.draggedElement = event.target;
-    event.dataTransfer.setData('text/plain', courseworkGame.draggedElement.id);
-    event.dataTransfer.effectAllowed = 'move';
-    courseworkGame.draggedElement.classList.add('dragging'); // Add dragging class
-  }
-
-  function handleDragEndCoursework(event) {
-    if (courseworkGame.draggedElement) {
-        courseworkGame.draggedElement.classList.remove('dragging'); // Remove dragging class
-        courseworkGame.draggedElement = null;
-    }
-  }
-
-  function handleStaplingPanelDropCoursework(event) {
-    event.preventDefault();
-    if (!courseworkGame.gameStarted || courseworkGame.professorCallActive || !courseworkGame.draggedElement) return;
-
-    const droppedPage = courseworkGame.draggedElement;
-    const staplingPanel = document.getElementById('stapling-panel');
-    const pagesContainer = document.getElementById('pages-container');
-
-    // Only allow dropping if the page is currently in the pages container
-    if (droppedPage && droppedPage.parentElement === pagesContainer) {
-        const placeholder = staplingPanel.querySelector('p');
-        if (placeholder && placeholder.textContent === 'Перетащите страницы сюда в правильном порядке') {
-            placeholder.remove();
-        }
-
-        // Move the actual DOM element
-        staplingPanel.appendChild(droppedPage);
-        droppedPage.classList.remove('coursework-page');
-        droppedPage.classList.add('coursework-stapled-page');
-        // Remove inline styles set for absolute positioning in pagesContainer
-        droppedPage.style.left = '';
-        droppedPage.style.top = '';
-        droppedPage.style.transform = '';
-
-        courseworkGame.stapledPages.push({
-            id: droppedPage.id,
-            order: parseInt(droppedPage.dataset.order)
-        });
-        updateStapledCountCoursework();
-        checkStaplerReadyCoursework();
-    }
-    courseworkGame.draggedElement = null; // Reset dragged element after drop
-  }
-
-  function handlePagesContainerDropCoursework(event) {
-    event.preventDefault();
-    if (!courseworkGame.gameStarted || courseworkGame.professorCallActive || !courseworkGame.draggedElement) return;
-
-    const droppedPage = courseworkGame.draggedElement;
-    const pagesContainer = document.getElementById('pages-container');
-    const staplingPanel = document.getElementById('stapling-panel');
-
-    // Only allow dropping if the page is currently in the stapling panel
-    if (droppedPage && droppedPage.parentElement === staplingPanel) {
-        // Remove from stapledPages array
-        courseworkGame.stapledPages = courseworkGame.stapledPages.filter(page => page.id !== droppedPage.id);
-
-        // Move the actual DOM element
-        pagesContainer.appendChild(droppedPage);
-        droppedPage.classList.remove('coursework-stapled-page');
-        droppedPage.classList.add('coursework-page');
-
-        // Randomize position for the dropped page within its new container
-        randomizePagePositionsForOneCoursework(droppedPage);
-        
-        updateStapledCountCoursework();
-        checkStaplerReadyCoursework();
-
-        // If no pages are left in stapling panel, add placeholder back
-        if (courseworkGame.stapledPages.length === 0) {
-            if (!staplingPanel.querySelector('p')) {
-                const placeholder = document.createElement('p');
-                placeholder.classList.add('text-gray-500');
-                placeholder.textContent = 'Перетащите страницы сюда в правильном порядке';
-                staplingPanel.appendChild(placeholder);
-            }
-        }
-    }
-    courseworkGame.draggedElement = null; // Reset dragged element after drop
-  }
-
-  let touchDraggedPageCoursework = null; // This variable is now redundant, use courseworkGame.draggedElement
-  let initialTouchOffsetXCoursework, initialTouchOffsetYCoursework;
-
-  function handleTouchStartCoursework(event) {
-    if (!courseworkGame.gameStarted || courseworkGame.professorCallActive) {
-        event.preventDefault();
-        return;
-    }
-    // Set the draggedElement
-    courseworkGame.draggedElement = event.target.closest('.coursework-page, .coursework-stapled-page');
-    if (!courseworkGame.draggedElement) {
-        return;
-    }
-
-    event.preventDefault(); // Prevent scrolling/zooming
-    courseworkGame.draggedElement.classList.add('dragging'); // Add dragging class
-    courseworkGame.draggedElement.style.position = 'absolute';
-    courseworkGame.draggedElement.style.zIndex = '1000';
-
-    const touch = event.touches[0];
-    const pageRect = courseworkGame.draggedElement.getBoundingClientRect();
-    courseworkGame.initialTouchX = touch.clientX - pageRect.left;
-    courseworkGame.initialTouchY = touch.clientY - pageRect.top;
-
-    // Append to body temporarily to allow dragging over other containers
-    document.body.appendChild(courseworkGame.draggedElement);
-  }
-
-  function handleTouchMoveCoursework(event) {
-    if (!courseworkGame.gameStarted || !courseworkGame.draggedElement || courseworkGame.professorCallActive) return;
-    event.preventDefault(); // Prevent scrolling during drag
-
-    const touch = event.touches[0];
-    
-    // Calculate new position relative to the viewport
-    const newX = touch.clientX - courseworkGame.initialTouchX;
-    const newY = touch.clientY - courseworkGame.initialTouchY;
-
-    courseworkGame.draggedElement.style.left = `${newX}px`;
-    courseworkGame.draggedElement.style.top = `${newY}px`;
-  }
-
-  function handleTouchEndCoursework(event) {
-    if (!courseworkGame.gameStarted || !courseworkGame.draggedElement || courseworkGame.professorCallActive) return;
-
-    courseworkGame.draggedElement.classList.remove('dragging');
-    courseworkGame.draggedElement.style.zIndex = '';
-    courseworkGame.draggedElement.style.position = ''; // Reset position to allow normal flow or re-positioning
-
-    const touch = event.changedTouches[0];
-    // Use document.elementFromPoint to determine the drop target
-    const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
-    const pagesContainer = document.getElementById('pages-container');
-    const staplingPanel = document.getElementById('stapling-panel');
-
-    const droppedPage = courseworkGame.draggedElement;
-    
-    // Check if dropped onto the stapling panel
-    if (targetElement && (targetElement === staplingPanel || staplingPanel.contains(targetElement))) {
-        // Move to stapling panel
-        const placeholder = staplingPanel.querySelector('p');
-        if (placeholder && placeholder.textContent === 'Перетащите страницы сюда в правильном порядке') {
-            placeholder.remove();
-        }
-
-        staplingPanel.appendChild(droppedPage);
-        droppedPage.classList.remove('coursework-page');
-        droppedPage.classList.add('coursework-stapled-page');
-        // Clear any inline positioning styles from touch-move
-        droppedPage.style.left = '';
-        droppedPage.style.top = '';
-        droppedPage.style.transform = '';
-
-
-        // Add to stapledPages array if not already there
-        if (!courseworkGame.stapledPages.some(p => p.id === droppedPage.id)) {
-            courseworkGame.stapledPages.push({
-                id: droppedPage.id,
-                order: parseInt(droppedPage.dataset.order)
-            });
-        }
-        updateStapledCountCoursework();
-        checkStaplerReadyCoursework();
-    } else if (targetElement && (targetElement === pagesContainer || pagesContainer.contains(targetElement))) {
-        // Move back to pages container (if it was from stapling panel)
-        if (droppedPage.parentElement === staplingPanel) {
-            courseworkGame.stapledPages = courseworkGame.stapledPages.filter(page => page.id !== droppedPage.id);
-        }
-        pagesContainer.appendChild(droppedPage);
-        droppedPage.classList.remove('coursework-stapled-page');
-        droppedPage.classList.add('coursework-page');
-        randomizePagePositionsForOneCoursework(droppedPage); // Reposition randomly
-
-        updateStapledCountCoursework();
-        checkStaplerReadyCoursework();
-
-        // If no pages are left in stapling panel, add placeholder back
-        if (courseworkGame.stapledPages.length === 0) {
-            if (!staplingPanel.querySelector('p')) {
-                const placeholder = document.createElement('p');
-                placeholder.classList.add('text-gray-500');
-                placeholder.textContent = 'Перетащите страницы сюда в правильном порядке';
-                staplingPanel.appendChild(placeholder);
-            }
-        }
-    } else {
-        // If dropped outside valid areas, return to original container
-        if (droppedPage.classList.contains('coursework-page')) {
-            pagesContainer.appendChild(droppedPage);
-            randomizePagePositionsForOneCoursework(droppedPage);
-        } else if (droppedPage.classList.contains('coursework-stapled-page')) {
-            staplingPanel.appendChild(droppedPage);
-            // No need to re-add to stapledPages as it was never removed
-        }
-    }
-    courseworkGame.draggedElement = null; // Reset dragged element
-  }
-
-  function randomizePagePositionsForOneCoursework(pageElement) {
-    const pagesContainer = document.getElementById('pages-container');
-    if (!pagesContainer) return;
-    const containerRect = pagesContainer.getBoundingClientRect();
-    const pageRect = pageElement.getBoundingClientRect();
-    const padding = 20;
-
-    const maxX_px = Math.max(0, containerRect.width - pageRect.width - padding * 2);
-    const maxY_px = Math.max(0, containerRect.height - pageRect.height - padding * 2);
-
-    const randomX_px = Math.random() * maxX_px + padding;
-    const randomY_px = Math.random() * maxY_px + padding;
-
-    pageElement.style.left = `${(randomX_px / containerRect.width) * 100}%`;
-    pageElement.style.top = `${(randomY_px / containerRect.height) * 100}%`;
-    pageElement.style.transform = `rotate(${Math.random() * 6 - 3}deg)`;
-  }
-
   function checkStaplerReadyCoursework() {
     const staplerButton = document.getElementById('stapler-button');
     if (!staplerButton) return;
-    if (courseworkGame.stapledPages.length > 0 && !courseworkGame.staplerJammed) {
-        staplerButton.disabled = false;
-    } else {
-        staplerButton.disabled = true;
-    }
+    staplerButton.disabled = !(courseworkGame.stapledPages.length > 0 && !courseworkGame.staplerJammed);
   }
 
   function performStaplingCoursework() {
@@ -1304,37 +1110,28 @@ const room246Game = (() => {
     const pagesContainer = document.getElementById('pages-container');
     if (!staplingPanel || !pagesContainer) return;
 
-    // Get current order from the DOM elements in the stapling panel
     const currentStapledElements = Array.from(staplingPanel.querySelectorAll('.coursework-stapled-page'));
-    courseworkGame.currentPageOrder = currentStapledElements.map(el => ({
-        id: el.dataset.id,
-        order: parseInt(el.dataset.order)
-    }));
+    const currentPageOrder = currentStapledElements.map(el => parseInt(el.dataset.order));
 
-    if (courseworkGame.currentPageOrder.length !== courseworkGame.pagesData.length) {
+    if (currentPageOrder.length !== courseworkGame.pagesData.length) {
         showFeedback('Не все страницы собраны!', 'info');
         return;
     }
 
-    // Sort the stapled pages by their original order to check correctness
-    const sortedStapledPages = [...courseworkGame.currentPageOrder].sort((a, b) => a.order - b.order);
-    const isCorrectOrder = sortedStapledPages.every((page, index) => page.order === index);
-
+    const isCorrectOrder = currentPageOrder.every((order, index) => order === index);
 
     if (isCorrectOrder) {
         endGameCoursework(true);
     } else {
         showFeedback('Неправильный порядок! Попробуйте снова.', 'error');
-        // Move all pages back to the pages container and re-randomize
         currentStapledElements.forEach(pageElement => {
             pagesContainer.appendChild(pageElement);
             pageElement.classList.remove('coursework-stapled-page');
             pageElement.classList.add('coursework-page');
+            pageElement.style.position = 'absolute';
             randomizePagePositionsForOneCoursework(pageElement);
         });
-        // Clear the stapledPages array and add the placeholder back
         courseworkGame.stapledPages = [];
-        courseworkGame.currentPageOrder = [];
         staplingPanel.innerHTML = '<p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>';
         updateStapledCountCoursework();
         checkStaplerReadyCoursework();
@@ -1354,15 +1151,9 @@ const room246Game = (() => {
     const interferenceType = Math.floor(Math.random() * 3);
 
     switch (interferenceType) {
-        case 0:
-            activateWindCoursework();
-            break;
-        case 1:
-            activateStaplerJamCoursework();
-            break;
-        case 2:
-            activateProfessorCallCoursework();
-            break;
+        case 0: activateWindCoursework(); break;
+        case 1: activateStaplerJamCoursework(); break;
+        case 2: activateProfessorCallCoursework(); break;
     }
     courseworkGame.nextInterferenceTimeoutId = setTimeout(triggerInterferenceCoursework, Math.random() * 20000 + 10000);
   }
@@ -1372,12 +1163,7 @@ const room246Game = (() => {
     if (!pagesContainer || courseworkGame.windActive) return;
     courseworkGame.windActive = true;
     pagesContainer.classList.add('wind-active');
-    const pages = Array.from(pagesContainer.children);
-    pages.sort(() => Math.random() - 0.5); // Shuffle existing pages
-    pages.forEach(page => pagesContainer.appendChild(page)); // Re-append in new order
-    requestAnimationFrame(() => {
-        randomizePagePositionsCoursework(); // Randomize positions again
-    });
+    randomizePagePositionsCoursework();
 
     showFeedback('Ветер! Страницы перемешались!', 'info');
     setTimeout(() => {
@@ -1396,8 +1182,8 @@ const room246Game = (() => {
     courseworkGame.staplerClicksRemaining = Math.floor(Math.random() * 3) + 2;
     staplerJammedMessage.classList.remove('hidden');
     staplerClicksNeededDisplay.textContent = courseworkGame.staplerClicksRemaining;
-    staplerButton.disabled = true;
-    staplerButton.textContent = 'Заел!';
+    staplerButton.disabled = false; // Must be enabled to un-jam
+    staplerButton.textContent = 'Починить!';
     showFeedback('Степлер заело!', 'error');
   }
 
@@ -1408,11 +1194,10 @@ const room246Game = (() => {
     if (!professorPopupOverlay || !professorQuestion || !pagesContainer || courseworkGame.professorCallActive) return;
 
     courseworkGame.professorCallActive = true;
-    courseworkGame.gameStarted = false; // Pause game timer and interactions
+    courseworkGame.gameStarted = false; // Pause game
 
     const availablePages = courseworkGame.pagesData.filter(page => !courseworkGame.stapledPages.some(sp => sp.id === page.id));
     if (availablePages.length === 0) {
-        // All pages are stapled, no question to ask
         courseworkGame.professorCallActive = false;
         courseworkGame.gameStarted = true;
         return;
@@ -1423,9 +1208,7 @@ const room246Game = (() => {
     professorQuestion.textContent = `Где "${randomPage.name}"?!`;
     professorPopupOverlay.classList.add('active');
 
-    // Add click listeners to all pages in the container
     pagesContainer.querySelectorAll('.coursework-page').forEach(pageElement => {
-        // Use { once: true } to ensure the listener is removed after one click
         pageElement.addEventListener('click', handleProfessorPageClickCoursework, { once: true });
     });
   }
@@ -1441,15 +1224,12 @@ const room246Game = (() => {
         showFeedback('Неверно! Поторопись!', 'error');
         resolveProfessorCallCoursework(false);
     }
-    // Ensure all listeners are removed regardless of correctness
     removeAllProfessorClickListenersCoursework();
   }
 
   function removeAllProfessorClickListenersCoursework() {
     const pagesContainer = document.getElementById('pages-container');
     if (pagesContainer) {
-        // Remove event listeners that were added with { once: true }
-        // This loop is primarily for safety/redundancy if { once: true } somehow fails
         pagesContainer.querySelectorAll('.coursework-page').forEach(pageElement => {
             pageElement.removeEventListener('click', handleProfessorPageClickCoursework);
         });
@@ -1457,76 +1237,44 @@ const room246Game = (() => {
   }
 
   function resolveProfessorCallCoursework(isCorrect) {
-    const professorPopupOverlay = document.getElementById('professor-popup-overlay');
-    if (professorPopupOverlay) professorPopupOverlay.classList.remove('active');
+    document.getElementById('professor-popup-overlay').classList.remove('active');
     courseworkGame.professorCallActive = false;
-    courseworkGame.gameStarted = true; // Resume game timer and interactions
+    courseworkGame.gameStarted = true; // Resume game
 
     if (!isCorrect) {
-        courseworkGame.timeLeft = Math.max(0, courseworkGame.timeLeft - 15); // Penalty for incorrect answer
+        courseworkGame.timeLeft = Math.max(0, courseworkGame.timeLeft - 15);
         document.getElementById('timer').textContent = formatTimeCoursework(courseworkGame.timeLeft);
     }
-    courseworkGame.correctProfessorPageId = null; // Reset correct page ID
+    courseworkGame.correctProfessorPageId = null;
   }
 
   function endGameCoursework(win) {
     courseworkGame.gameStarted = false;
     clearInterval(courseworkGame.timerInterval);
     clearTimeout(courseworkGame.nextInterferenceTimeoutId);
-    const staplerButton = document.getElementById('stapler-button');
-    const startButton = document.getElementById('start-button');
-    const restartButton = document.getElementById('restart-button');
     const gameEndScreen = document.getElementById('game-end-screen');
     const endTitle = document.getElementById('end-title');
     const endMessage = document.getElementById('end-message');
-
-    if (staplerButton) staplerButton.disabled = true;
-    if (startButton) startButton.style.display = 'none';
-    if (restartButton) restartButton.style.display = 'block';
-
-    if (gameEndScreen) gameEndScreen.classList.add('active');
+    document.getElementById('restart-button').style.display = 'block';
+    
+    gameEndScreen.classList.add('active');
     if (win) {
-        if (endTitle) {
-            endTitle.textContent = 'Победа!';
-            endTitle.classList.remove('text-red-600');
-            endTitle.classList.add('text-green-600');
-        }
-
-        let bonusMessage = '';
-        const timeTaken = 150 - courseworkGame.timeLeft;
-        if (timeTaken < 60) {
-            bonusMessage = 'Успел до дедлайна!';
-        } else if (timeTaken < 90) {
-            bonusMessage = 'Отличник подшивки!';
-        } else {
-            bonusMessage = 'Подшивка от души!';
-        }
-        if (endMessage) {
-            endMessage.textContent = `Курсовая подшита! ${bonusMessage}`;
-            endMessage.classList.remove('text-red-500');
-            endMessage.classList.add('text-green-700');
-        }
-        // Call the main game's complete function
+        endTitle.textContent = 'Победа!';
+        endTitle.className = 'coursework-game-end-screen h2 text-green-600';
+        endMessage.textContent = 'Курсовая подшита! Отлично!';
+        endMessage.className = 'coursework-game-end-screen p text-green-700';
         completeRoom246Game();
     } else {
-        // If the game ends without winning (e.g., time runs out), it will now simply reset.
-        if (endTitle) {
-            endTitle.textContent = 'Поражение!';
-            endTitle.classList.remove('text-green-600');
-            endTitle.classList.add('text-red-600');
-        }
-        if (endMessage) {
-            endMessage.textContent = 'К сожалению, вы не успели сделать подшивку вовремя. Попробуйте еще раз.';
-            endMessage.classList.remove('text-green-700');
-            endMessage.classList.add('text-red-500');
-        }
-        // Automatically restart the minigame if the player loses
+        endTitle.textContent = 'Поражение!';
+        endTitle.className = 'coursework-game-end-screen h2 text-red-600';
+        endMessage.textContent = 'Вы не успели. Попробуйте снова.';
+        endMessage.className = 'coursework-game-end-screen p text-red-500';
         setTimeout(() => {
-            initCourseworkGame(); // Re-initialize the minigame
-            gameEndScreen.classList.remove('active'); // Hide the end screen
-        }, 3000); // Give player time to read the message
+            initCourseworkGame();
+            gameEndScreen.classList.remove('active');
+        }, 3000);
     }
-    cleanupCourseworkGame(); // Clean up listeners and intervals
+    cleanupCourseworkGame();
   }
 
   function showEnding(endingId) {
@@ -1541,12 +1289,11 @@ const room246Game = (() => {
     const infoPanel = document.getElementById('game-info-panel');
     const inventoryBar = document.querySelector('.inventory-bar');
     const gameTimer = document.getElementById('game-timer');
-    const room246Feedback = document.getElementById('room246Feedback'); // Get feedback element
-    const dialogBox = document.getElementById('dialog-box'); // Get dialog box
+    const room246Feedback = document.getElementById('room246Feedback');
+    const dialogBox = document.getElementById('dialog-box');
 
     if (!endingScreen) return;
 
-    // Hide all game elements
     if (gameScreen) gameScreen.style.display = 'none';
     if (dialogBox) dialogBox.style.display = 'none';
     if (inventoryBar) inventoryBar.style.display = 'none';
@@ -1582,7 +1329,6 @@ const room246Game = (() => {
   function completeRoom246Game() {
     gamesCompleted.room246 = true;
     showBoxAnimation(4); // Triggers final gift animation
-    // Clean up any active minigame listeners/intervals
     cleanupLockpickingGame();
     cleanupCourseworkGame();
   }

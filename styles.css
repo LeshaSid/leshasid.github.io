@@ -1526,42 +1526,39 @@ kbd {
 
 .coursework-page {
     background-color: #ffffff;
-    border: 1px solid #e2e8f0; /* Softer border */
-    border-radius: 5px; /* Smaller border-radius for more 'page-like' look */
-    padding: 8px 12px; /* Reduced padding */
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 6px 10px;
     cursor: grab;
-    /* Enhanced box-shadow for a layered paper effect */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15), 0 0 5px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    touch-action: none; /* Disable default touch actions like scrolling/zooming */
-    font-size: 0.9rem; /* Slightly smaller text */
+    touch-action: none;
+    font-size: 0.75rem;
     font-weight: 500;
     text-align: center;
     flex-shrink: 0;
-    width: 150px; /* Fixed smaller width */
+    width: 120px; /* MODIFIED: Reduced width */
+    height: 80px; /* MODIFIED: Reduced height */
     box-sizing: border-box;
-    position: absolute; /* Pages are absolutely positioned */
+    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100px; /* Fixed smaller height */
     line-height: 1.2;
-    color: #000; /* Black text color for pages */
+    color: #000;
 }
 
-.coursework-page.dragging { /* Новый класс для перетаскиваемого элемента */
+.coursework-page.dragging {
     opacity: 0.7;
     transform: scale(1.05);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 1001; /* Ensure it's on top */
+    pointer-events: none; /* Prevent the element from interfering with drop events */
 }
 
 
 .coursework-page:active {
     cursor: grabbing;
-    /* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); */ /* Перенесено в .dragging */
-    /* transform: scale(1.08); */ /* Перенесено в .dragging */
-    /* z-index: 1000; */ /* Перенесено в .dragging */
 }
 
 .coursework-stapling-panel {
@@ -1571,10 +1568,10 @@ kbd {
     padding: 20px;
     min-height: 180px; /* Taller */
     display: flex;
-    flex-direction: column;
-    gap: 8px; /* More space between stapled pages */
-    align-items: center;
-    justify-content: flex-start;
+    flex-wrap: wrap; /* Allow pages to wrap inside */
+    gap: 8px;
+    align-items: flex-start; /* Align items to the top */
+    justify-content: flex-start; /* Align items to the left */
     overflow-y: auto;
     position: relative;
     box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
@@ -1586,20 +1583,27 @@ kbd {
     border: 1px solid #a7f3d0;
     border-radius: 8px; /* More rounded */
     padding: 10px 15px;
-    width: 90%; /* Slightly narrower */
+    width: 120px; /* Same size as non-stapled pages */
+    height: 80px;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-size: 0.95rem; /* Slightly larger text */
+    font-size: 0.75rem;
     font-weight: 500;
-    color: #2f855a; /* Darker green text */
-    cursor: grab; /* Добавлено, чтобы можно было перетаскивать обратно */
-    touch-action: none; /* Disable default touch actions like scrolling/zooming */
+    color: #2f855a;
+    cursor: grab;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Make it relative for normal flow */
+    flex-shrink: 0;
 }
-.coursework-stapled-page.dragging { /* Новый класс для перетаскиваемого элемента */
+.coursework-stapled-page.dragging {
     opacity: 0.7;
     transform: scale(1.05);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 1001;
+    pointer-events: none;
 }
 
 .coursework-stapler-button {
@@ -1936,5 +1940,109 @@ kbd {
         top: 10px;
         padding: 10px 20px;
         font-size: 0.9rem;
+    }
+}
+
+/* Custom styles for lockpicking controls */
+.lockpicking-controls {
+    display: flex;
+    flex-direction: column; /* Stack vertically by default */
+    align-items: center;
+    gap: 10px; /* Space between rows of buttons */
+    margin-top: 20px;
+}
+
+.lockpicking-controls .horizontal-controls {
+    display: flex;
+    gap: 10px; /* Space between horizontal buttons */
+    justify-content: center;
+    width: 100%; /* Take full width for centering */
+}
+
+.lockpicking-controls .control-button {
+    width: 70px; /* Make buttons square */
+    height: 70px; /* Make buttons square */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem; /* Larger icon/text */
+    padding: 0; /* Remove padding to allow full size for triangle */
+    position: relative;
+    overflow: hidden; /* Hide overflow for triangle shapes */
+    border-radius: 10px; /* Slightly rounded corners for the square */
+}
+
+/* Triangle shapes for directional buttons */
+.lock-button-up::before,
+.lock-button-left::before,
+.lock-button-right::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    transition: all 0.2s ease-in-out;
+}
+
+.lock-button-up::before {
+    border-width: 0 20px 30px 20px; /* Up arrow */
+    border-color: transparent transparent #ffcc33 transparent;
+    top: 15px; /* Adjust position */
+}
+
+.lock-button-left::before {
+    border-width: 20px 30px 20px 0; /* Left arrow */
+    border-color: transparent #ffcc33 transparent transparent;
+    left: 15px; /* Adjust position */
+}
+
+.lock-button-right::before {
+    border-width: 20px 0 20px 30px; /* Right arrow */
+    border-color: transparent transparent transparent #ffcc33;
+    right: 15px; /* Adjust position */
+}
+
+/* Text for the tension button */
+.lock-button-tension {
+    font-size: 1rem; /* Smaller font for text */
+    white-space: nowrap; /* Prevent text wrapping */
+    padding: 5px; /* Add some padding for text */
+}
+
+/* Hover effects for triangle buttons */
+.lockpicking-controls .control-button:hover::before {
+    border-color: transparent transparent #fff transparent; /* White on hover */
+}
+.lock-button-left:hover::before {
+    border-color: transparent #fff transparent transparent;
+}
+.lock-button-right:hover::before {
+    border-color: transparent transparent transparent #fff;
+}
+
+/* Mobile adjustments for lockpicking controls */
+@media (max-width: 600px) {
+    .lockpicking-controls .control-button {
+        width: 60px; /* Smaller square buttons on mobile */
+        height: 60px;
+    }
+
+    .lock-button-up::before {
+        border-width: 0 15px 25px 15px; /* Smaller arrow */
+        top: 12px;
+    }
+
+    .lock-button-left::before {
+        border-width: 15px 25px 15px 0; /* Smaller arrow */
+        left: 12px;
+    }
+
+    .lock-button-right::before {
+        border-width: 15px 0 15px 25px; /* Smaller arrow */
+        right: 12px;
+    }
+
+    .lock-button-tension {
+        font-size: 0.9rem; /* Even smaller font for tension text */
     }
 }
