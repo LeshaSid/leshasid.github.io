@@ -38,17 +38,23 @@ const room246Game = (() => {
       note_clue: {
         speaker: 'Записка',
         lines: [
-          { id: 'start', text: 'На записке написана загадка: "Я всегда перед вами, но вы меня не видите. Что это?". Отгадка - пароль от ноутбука.', condition: '!checkFlag_note_read' },
+          { id: 'start', text: 'На записке написана загадка: "Кто может поднять и передвинуть и коня, и слона?". Отгадка - пароль от ноутбука.', condition: '!checkFlag_note_read' },
           { id: 'read', text: 'Вы уже прочитали записку.', condition: 'checkFlag_note_read' }
         ]
       },
       wardrobe: {
         speaker: 'Шкаф',
         lines: [
-          { id: 'start', text: 'Массивный шкаф заперт на замок.', condition: '!checkFlag_wardrobe_unlocked, checkInventory_paperclip', type: 'action', action: 'startMinigame', minigameId: 'lockpicking' }, // Запуск мини-игры взлома
-          { id: 'no_paperclip', text: 'Массивный шкаф заперт на замок. Кажется, его можно отпереть чем-то тонким.', condition: '!checkInventory_paperclip' },
+          // Приоритет: если шкаф уже открыт и нитки взяты
+          { id: 'empty', text: 'Шкаф пуст.', condition: 'checkFlag_wardrobe_unlocked, checkInventory_thread_and_scissors' },
+          // Приоритет: если шкаф открыт, но нитки еще не взяты (позволяет взять нитки)
           { id: 'unlocked', text: 'Шкаф открыт. Внутри вы находите моток ниток и ножницы.', condition: 'checkFlag_wardrobe_unlocked', type: 'action', action: 'takeItem', itemId: 'thread_and_scissors' },
-          { id: 'empty', text: 'Шкаф пуст.', condition: 'checkFlag_wardrobe_unlocked, checkInventory_thread_and_scissors' }
+          // Приоритет: если ноутбук не разблокирован (нет инструкции)
+          { id: 'no_instruction', text: 'Шкаф заперт. Чтобы взломать замок, нужна инструкция, которую можно найти в ноутбуке.', condition: '!checkFlag_laptop_unlocked' },
+          // Приоритет: если нет скрепки
+          { id: 'no_paperclip', text: 'Массивный шкаф заперт на замок. Кажется, его можно отпереть чем-то тонким.', condition: '!checkInventory_paperclip' },
+          // Последнее: если все условия для начала мини-игры выполнены
+          { id: 'start', text: 'Массивный шкаф заперт на замок.', condition: '!checkFlag_wardrobe_unlocked, checkInventory_paperclip, checkFlag_laptop_unlocked', type: 'action', action: 'startMinigame', minigameId: 'lockpicking' }
         ]
       }
     },
@@ -96,7 +102,6 @@ const room246Game = (() => {
     gameStarted: false,
     timerInterval: null,
     timeLeft: 150, // 2 minutes 30 seconds
-    stapledPages: [], // Stores {id, order} of pages in the stapling panel
     threadTangled: false, // NEW: Replaced staplerJammed
     untangleClicksRemaining: 0, // NEW: Replaced staplerClicksRemaining
     professorCallActive: false,
@@ -306,10 +311,12 @@ const room246Game = (() => {
       const input = inputEl.value.trim().toLowerCase(); // Приводим к нижнему регистру для сравнения
       let correct = false;
 
-      if (promptKey === 'password' && input === 'будущее') { // Отгадка на "Я всегда перед вами, но вы меня не видите. Что это?"
+      if (promptKey === 'password' && input === 'шахматист') { // Отгадка на "Кто может поднять и передвинуть и коня, и слона? "
           gameState.flags.laptop_unlocked = true;
+          console.log('Laptop unlocked flag set to:', gameState.flags.laptop_unlocked); // Debug log
           showFeedback('Пароль верный! Файл с инструкцией доступен.', "success");
           correct = true;
+          startMinigame('lockpicking'); // <--- ADDED THIS LINE
       }
 
       if (correct) {
@@ -355,14 +362,7 @@ const room246Game = (() => {
 
     if (!minigameContainer || !gameScreen || !infoPanel || !inventoryBar || !gameTimer || !dialogBox) return;
 
-    // Block page scrolling only for mobile devices when starting this specific minigame
-    if (minigameId === 'stitching' && /Mobi|Android/i.test(navigator.userAgent)) {
-        document.body.style.overflow = 'hidden';
-    } else if (minigameId === 'lockpicking') { // Lockpicking also blocks scroll
-        document.body.style.overflow = 'hidden';
-    }
-
-
+    // Common logic to hide main game UI
     gameScreen.style.display = 'none';
     infoPanel.style.display = 'none';
     inventoryBar.style.display = 'none';
@@ -372,13 +372,27 @@ const room246Game = (() => {
     minigameContainer.innerHTML = ''; // Clear previous minigame
 
     if (minigameId === 'lockpicking') {
+        console.log('Attempting to start lockpicking minigame. laptop_unlocked:', gameState.flags.laptop_unlocked); // Debug log
+        // Check for paperclip
         if (!gameState.inventory.includes('paperclip')) {
             showFeedback('Вам нужна скрепка, чтобы взломать замок!', 'error');
-            minigameContainer.style.display = 'none';
-            gameScreen.style.display = 'block';
+            minigameContainer.style.display = 'none'; // Hide minigame container
+            gameScreen.style.display = 'block'; // Show main game UI
             infoPanel.style.display = 'block';
-            inventoryBar.style.display = 'flex'; // Assuming inventory is flex
-            gameTimer.style.display = 'block'; // Show main game timer
+            inventoryBar.style.display = 'flex';
+            gameTimer.style.display = 'block';
+            document.body.style.overflow = ''; // Re-enable scrolling
+            return;
+        }
+        // Check for laptop unlocked flag (instruction found)
+        // This check is primarily for when the minigame is triggered via hotspot, not after password entry
+        if (!gameState.flags.laptop_unlocked) {
+            showFeedback('Сначала найдите инструкцию по взлому замка на ноутбуке!', 'error');
+            minigameContainer.style.display = 'none'; // Hide minigame container
+            gameScreen.style.display = 'block'; // Show main game UI
+            infoPanel.style.display = 'block';
+            inventoryBar.style.display = 'flex';
+            gameTimer.style.display = 'block';
             document.body.style.overflow = ''; // Re-enable scrolling
             return;
         }
@@ -996,6 +1010,10 @@ const room246Game = (() => {
         startButton.style.display = 'none';
         startTimerCoursework();
         courseworkGame.nextInterferenceTimeoutId = setTimeout(triggerInterferenceCoursework, Math.random() * 10000 + 5000);
+        // Block page scrolling only for mobile devices when starting this specific minigame
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            document.body.style.overflow = 'hidden';
+        }
     };
 
     restartButton.onclick = () => initCourseworkGame();
@@ -1398,3 +1416,4 @@ const room246Game = (() => {
     closeDialog
   };
 })();
+

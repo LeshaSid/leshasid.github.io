@@ -23,7 +23,7 @@ const gameState = {
       {id: "leo", name: "Лёша", type: "companion", effect: "Дает +1 к броскам кубика"},
       {id: "food", name: "Припасы", type: "resource", effect: "+2 еды при использовании"},
       {id: "map", name: "Карта кладбища", type: "special", effect: "Позволяет избежать загадок"},
-      {id: "key", name: "Хрустальный ключ", type: "special", effect: "Открывает башню"},
+      {id: "key", name: "Хрустальный ключ", type: "special", effect: "Открывает станцию"},
       {id: "sword", name: "Деревянный меч", type: "weapon", effect: "+1 к силе в бою"},
       {id: "shield", name: "Лист-щит", type: "armor", effect: "+1 к защите"}
     ],
@@ -54,9 +54,9 @@ const enemies = {
     {name: "Чувак, который держит в страхе весь район", health: 8, strength: 6, reward: "strength", image: "chuvak.jpg"}
   ],
   tower: [
-    {name: "Страж башни", health: 8, strength: 6, reward: "final_key", image: "towerguard.jpg"},
-    {name: "Иллюзия страха", health: 9, strength: 7, reward: "knowledge", image: "illusionoffear.jpg"},
-    {name: "Последний испытатель", health: 10, strength: 8, reward: "victory", image: "lasttester.jpg"}
+    {name: "Голосовой Паук", health: 8, strength: 6, reward: "final_key", image: "spider.jpg"},
+    {name: "Ночной Телефонист", health: 9, strength: 7, reward: "knowledge", image: "signalman.jpg"},
+    {name: "Статический Призрак", health: 10, strength: 8, reward: "victory", image: "ghost.jpg"}
   ]
 };
 
@@ -116,7 +116,7 @@ function initAilaGame() {
       <div id="battle-screen" class="mini-game" style="display:none">
         <h3>Бой с <span id="enemy-name"></span></h3>
         <div class="battle-stats">
-          <div class="player-stats">Эйла: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
+          <div class="player-stats">Тоня: ❤️ <span id="player-health">${gameState.health}</span>/${gameState.maxHealth} ⚔️ ${gameState.strength}</div>
           <div class="enemy-stats"><span id="enemy-name2"></span>: ❤️ <span id="enemy-health"></span> ⚔️ <span id="enemy-strength"></span></div>
         </div>
         <div class="enemy-image-container">
@@ -136,7 +136,7 @@ function initAilaGame() {
         <div class="card">
           <h3 class="card-title">Пролог: Начало пути</h3>
           <img src="sanat.png" alt="Берег Днепра" class="chapter-image">
-          <p class="card-text">Ты стоишь на берегу Днепра. Перед тобой простирается пустынная земля, освещаемая лишь бледным светом луны. Вдали, за холмами, мерцает странный свет - тот самый Далёкий Свет, о котором ходят легенды. Что ты сделаешь?</p>
+          <p class="card-text">Ты стоишь на берегу Днепра. Перед тобой простирается поля и леса. Вдали, где-то в городе, мерцает странный свет - тот самый Далёкий Свет, о котором ходят легенды. Что ты сделаешь?</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('explore')">🔍 Порыскать по кустам</button>
             <button class="choice" onclick="makeChoice('light')">✨ Идти к свету</button>
@@ -378,8 +378,8 @@ function handleChapter3Choice(choice) {
   
   switch(choice) {
     case "enter_mine":
-      if (gameState.inventory.includes("Карта лабиринта")) {
-        addToStory("Используя карту лабиринта, ты легко находишь выход из Евроопта.", true);
+      if (gameState.inventory.includes("Карта Евроопта")) {
+        addToStory("Используя карту Евроопта, ты легко находишь выход из Евроопта.", true);
         changeChapter("chapter4");
       } else {
         addToStory("Ты приходишь к Евроопту. Темнота сгущается, и слышны странные звуки.", true);
@@ -393,7 +393,7 @@ function handleChapter3Choice(choice) {
       
     case "buy_map":
       if (gameState.coins >= 3) {
-        addToStory("Ты покупаешь карту лабиринта у странного торговца.", true);
+        addToStory("Ты покупаешь карту Евроопта у странного торговца.", true);
         gameState.coins -= 3;
         gameState.inventory.push("Карта лабиринта");
         updateResources();
@@ -402,7 +402,7 @@ function handleChapter3Choice(choice) {
           <div class="card">
             <h3 class="card-title">Глава 3: Евроопт</h3>
             <img src="evroopt.jpg" alt="Евроопт" class="chapter-image">
-            <p class="card-text">Теперь у тебя есть карта лабиринта. Что ты будешь делать?</p>
+            <p class="card-text">Теперь у тебя есть карта Евроопта. Что ты будешь делать?</p>
             <div class="choices">
               <button class="choice" onclick="makeChoice('enter_mine')">⛏️ Войти в Евроопт</button>
             </div>
@@ -439,7 +439,7 @@ function showRiddleModal() {
   modalContent.style.maxWidth = '500px';
   
   const riddleText = document.createElement('p');
-  riddleText.textContent = "Что можно сломать, даже не касаясь этого?";
+  riddleText.textContent = "Разгадай загадку, разреши вопрос, что стреляет в пятку, попадает в нос?";
   riddleText.style.fontSize = '1.2rem';
   riddleText.style.marginBottom = '20px';
   riddleText.style.color = '#ffcc33';
@@ -462,7 +462,7 @@ function showRiddleModal() {
   submitBtn.style.marginTop = '10px';
   submitBtn.onclick = () => {
     const answer = input.value.toLowerCase().trim();
-    if (answer === "молчание" || answer === "тишина") {
+    if (answer === "пук" || answer === "Пук") {
       modal.remove();
       addToStory("Ты правильно отвечаешь на загадку! Дверь открывается, и ты можешь пройти дальше без боя.", true);
       gameState.riddlesSolved++;
@@ -496,9 +496,9 @@ function handleChapter4Choice(choice) {
         
         chapter4.innerHTML = `
           <div class="card">
-            <h3 class="card-title">Глава 4: Водонапорная башня</h3>
-            <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
-            <p class="card-text">Башня заперта. Тебе нужно найти ключ или другой способ войти.</p>
+            <h3 class="card-title">Глава 4: Заброшенная телефонная станция</h3>
+            <img src="telephonestation.png" alt="Башня Света" class="chapter-image">
+            <p class="card-text">Станция заперта. Тебе нужно найти ключ или другой способ войти.</p>
             <div class="choices">
               <button class="choice" onclick="makeChoice('search_around')">🔍 Искать вокруг башни</button>
               <button class="choice" onclick="makeChoice('study_machines')">🔧 Изучить механизмы</button>
@@ -527,16 +527,16 @@ function handleChapter4Choice(choice) {
         
         chapter4.innerHTML = `
           <div class="card">
-            <h3 class="card-title">Глава 4: Водонапорная башня</h3>
-            <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
-            <p class="card-text">Ты нашла ключ! Теперь ты может войти в башню.</p>
+            <h3 class="card-title">Глава 4: Заброшенная телефонная станция</h3>
+            <img src="telephonestation.png" alt="Башня Света" class="chapter-image">
+            <p class="card-text">Ты нашла ключ! Теперь ты может войти в станцию.</p>
             <div class="choices">
-              <button class="choice" onclick="makeChoice('enter_tower')">🚪 Войти в башню</button>
+              <button class="choice" onclick="makeChoice('enter_tower')">🚪 Войти в станцию</button>
             </div>
           </div>
         `;
       } else {
-        addToStory("Ты обыскиваешь территорию вокруг башни, но ничего полезного не находишь.", true);
+        addToStory("Ты обыскиваешь территорию вокруг станции, но ничего полезного не находишь.", true);
       }
       break;
       
@@ -560,7 +560,7 @@ function handleChapter5Choice(choice) {
         updateResources();
         renderInventory();
       }
-      addToStory("Ты начинаешь подниматься по винтовой лестнице башни. С каждым этажом воздух становится всё более насыщенным энергией.", true);
+      addToStory("Ты начинаешь проходить вглубь телефонной станции. С каждым этажом воздух становится всё более насыщенным энергией.", true);
       startBattle("tower", "chapter5");
       break;
       
@@ -573,10 +573,10 @@ function handleChapter5Choice(choice) {
       chapter5.innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 5: Внутри башни</h3>
-          <img src="intowatertower.jpg" alt="Внутри башни" class="chapter-image">
-          <p class="card-text">Отдохнув, ты готова продолжить подъём на вершину башни.</p>
+          <img src="intotelephonestation.jpg" alt="Внутри башни" class="chapter-image">
+          <p class="card-text">Отдохнув, ты готова продолжить путь к далёкому свету.</p>
           <div class="choices">
-            <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Подняться на вершину</button>
+            <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Идти дальше</button>
           </div>
         </div>
       `;
@@ -689,9 +689,9 @@ function changeChapter(newChapter) {
     case "chapter4":
       document.getElementById('chapter4').innerHTML = `
         <div class="card">
-          <h3 class="card-title">Глава 4: Водонапорная башня</h3>
-          <img src="watertower.jpg" alt="Башня Света" class="chapter-image">
-          <p class="card-text">После долгого пути ты наконец видишь перед собой водонапорную башню - источник Далёкого Света. Башня окружена странными механизмами.</p>
+          <h3 class="card-title">Глава 4: Заброшенная телефонная станция</h3>
+          <img src="telephonestation.png" alt="Башня Света" class="chapter-image">
+          <p class="card-text">После долгого пути ты наконец видишь перед собой телефонную станцию - источник Далёкого Света. Станция окружена странными механизмами.</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('enter_tower')">🚪 Попытаться войти</button>
             <button class="choice" onclick="makeChoice('study_machines')">🔧 Изучить механизмы</button>
@@ -706,11 +706,11 @@ function changeChapter(newChapter) {
       document.getElementById('chapter5').innerHTML = `
         <div class="card">
           <h3 class="card-title">Глава 5: Внутри башни</h3>
-          <img src="intowatertower.jpg" alt="Внутри башни" class="chapter-image">
-          <p class="card-text">Ты входишь в башню. Внутри она видит винтовую лестницу, ведущую наверх. Воздух наполнен статическим электричеством.</p>
+          <img src="intotelephonestation.jpg" alt="Внутри башни" class="chapter-image">
+          <p class="card-text">Ты входишь в станцию. Внутри ты видишь множество комнат со старым телефонным оборудованием. Воздух наполнен статическим электричеством.</p>
           <div class="choices">
-            <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Подняться наверх</button>
-            <button class="choice" onclick="makeChoice('rest_tower')">🛌 Отдохнуть перед подъёмом</button>
+            <button class="choice" onclick="makeChoice('climb_tower')">⬆️ Идти дальше</button>
+            <button class="choice" onclick="makeChoice('rest_tower')">🛌 Отдохнуть</button>
           </div>
         </div>
       `;
@@ -721,7 +721,7 @@ function changeChapter(newChapter) {
         <div class="card">
           <h3 class="card-title">Глава 6: Сердце Света</h3>
           <img src="distantlight.jpg" alt="Сердце Света" class="chapter-image">
-          <p class="card-text">Эйла достигает вершины башни. Перед ней огромный механизм, излучающий Далёкий Свет. Что она сделает?</p>
+          <p class="card-text">Ты достигаешь комнаты с далёким светом. Что ты сделаешь?</p>
           <div class="choices">
             <button class="choice" onclick="makeChoice('activate_light')">✨ Активировать свет</button>
           </div>
@@ -878,7 +878,7 @@ function resetAilaGame() {
       {id: "leo", name: "Лёша", type: "companion", effect: "Дает +1 к броскам кубика"},
       {id: "food", name: "Припасы", type: "resource", effect: "+2 еды при использовании"},
       {id: "map", name: "Карта кладбища", type: "special", effect: "Позволяет избежать загадок"},
-      {id: "key", name: "Хрустальный ключ", type: "special", effect: "Открывает башню"},
+      {id: "key", name: "Хрустальный ключ", type: "special", effect: "Открывает станцию"},
       {id: "sword", name: "Деревянный меч", type: "weapon", effect: "+1 к силе в бою"},
       {id: "shield", name: "Лист-щит", type: "armor", effect: "+1 к защите"}
     ],

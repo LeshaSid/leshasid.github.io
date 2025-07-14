@@ -1,10 +1,10 @@
 // marketing-game.js
 let marketingState = {
   currentDay: 1,
-  budget: 800, // Снижен стартовый бюджет с 1000 до 800
-  reputation: 35, // Снижена стартовая репутация с 40 до 35
-  followers: 40, // Снижены стартовые подписчики с 50 до 40
-  satisfaction: 45, // Снижена стартовая удовлетворенность с 50 до 45
+  budget: 750, // Снижен стартовый бюджет для повышения сложности
+  reputation: 30, // Снижена стартовая репутация
+  followers: 35, // Снижены стартовые подписчики
+  satisfaction: 45,
   inflation: 0,
   skills: {
     creativity: 1,
@@ -28,22 +28,23 @@ let marketingState = {
   },
   talentPoints: 0,
   experience: 0,
-  nextLevelExp: 60, // Увеличено требование к опыту для первого уровня
+  nextLevelExp: 70, // Увеличено требование к опыту для первого уровня
   wasWarnedOnce: false, // Флаг для буферной зоны при проигрыше
-  lastEvents: [] // Для отслеживания последовательности событий (пункт 5)
+  lastEvents: [], // Для отслеживания последовательности событий
+  actionUsage: {} // НОВОЕ: Объект для отслеживания использования каждого действия
 };
 
-// Пассивный доход от офиса (обновлен в game-data.js)
-const OFFICE_PASSIVE_INCOME = [0, 15, 40, 80]; // Обновлено согласно game-data.js
+// Пассивный доход от офиса (увеличен, чтобы сделать улучшение более ценным)
+const OFFICE_PASSIVE_INCOME = [0, 25, 60, 120];
 
 function startMarketingGame() {
   // Сброс состояния игры к начальным параметрам
   marketingState = {
     currentDay: 1,
-    budget: 800, // Снижен стартовый бюджет
-    reputation: 35, // Снижена стартовая репутация
-    followers: 40, // Снижены стартовые подписчики
-    satisfaction: 45, // Снижена стартовая удовлетворенность
+    budget: 750,
+    reputation: 30,
+    followers: 35,
+    satisfaction: 45,
     inflation: 0,
     skills: {
       creativity: 1,
@@ -67,9 +68,10 @@ function startMarketingGame() {
     },
     talentPoints: 0,
     experience: 0,
-    nextLevelExp: 60, // Увеличено требование к опыту для первого уровня
+    nextLevelExp: 70,
     wasWarnedOnce: false,
-    lastEvents: []
+    lastEvents: [],
+    actionUsage: {} // НОВОЕ: Сброс использования действий при старте новой игры
   };
   
   renderMarketingUI();
@@ -325,8 +327,17 @@ function renderActions() {
   container.innerHTML = '';
   
   marketingGameData.marketingActions.forEach(action => {
-    let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation));
+    // Множитель, который зависит от текущего дня, чтобы увеличить стоимость действий по ходу игры.
+    // Используем Math.pow для экспоненциального роста. База 1.1 означает 10% рост за день.
+    const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1); 
     
+    let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation) * exponentialMultiplier);
+    
+    // НОВОЕ: Увеличение цены в зависимости от частоты выбора действия
+    const usageCount = marketingState.actionUsage[action.id] || 0;
+    const usageMultiplier = 1 + (usageCount * 0.05); // 5% увеличение за каждое использование
+    actualCost = Math.floor(actualCost * usageMultiplier);
+
     // Бонус от коммуникации на стоимость
     if (action.communicable) {
       actualCost = Math.floor(actualCost * (1 - marketingState.skills.communication * 0.05));
@@ -357,6 +368,9 @@ function selectAction(actionId, cost) {
   
   const action = marketingGameData.marketingActions.find(a => a.id === actionId);
   if (!action) return;
+
+  // НОВОЕ: Увеличиваем счетчик использования для выбранного действия
+  marketingState.actionUsage[actionId] = (marketingState.actionUsage[actionId] || 0) + 1;
   
   marketingState.budget -= cost;
   
@@ -368,14 +382,14 @@ function selectAction(actionId, cost) {
   // Базовое совпадение ключевых слов
   actionKeywords.forEach(actionKw => {
     if (clientKeywords.includes(actionKw)) {
-      match += 20; // Увеличен вес совпадения
+      match += 20;
     }
   });
 
   // Дополнительные бонусы от навыков
-  if (action.creative) match += marketingState.skills.creativity * 10; // Увеличено влияние креативности
-  if (action.analytical) match += marketingState.skills.analytics * 7; // Увеличено влияние аналитики
-  if (action.communicable) match += marketingState.skills.communication * 7; // Увеличено влияние коммуникации
+  if (action.creative) match += marketingState.skills.creativity * 10;
+  if (action.analytical) match += marketingState.skills.analytics * 7;
+  if (action.communicable) match += marketingState.skills.communication * 7;
 
   match += Math.floor(Math.random() * 20); // Элемент случайности
   match = Math.min(100, Math.max(0, match)); // Ограничиваем эффективность от 0 до 100
@@ -387,14 +401,14 @@ function selectAction(actionId, cost) {
 
   // --- Применение эффектов талантов ---
   let talentBonus = 1.0;
-  if (action.type === 'digital' && marketingState.talents.digital.includes(1)) talentBonus += 0.15; // Таргет. реклама
-  if (action.type === 'atl' && marketingState.talents.atl.includes(7)) talentBonus += 0.15; // Медиапланирование
-  if (action.type === 'btl' && marketingState.talents.btl.includes(5)) talentBonus += 0.30; // Промо-акции (для охвата BTL)
+  if (action.type === 'digital' && marketingState.talents.digital.includes(1)) talentBonus += 0.15;
+  if (action.type === 'atl' && marketingState.talents.atl.includes(7)) talentBonus += 0.15;
+  if (action.type === 'btl' && marketingState.talents.btl.includes(5)) talentBonus += 0.30;
   
-  if (action.effect.includes('followers') && marketingState.talents.digital.includes(2)) talentBonus += 0.25; // SMM
-  if (action.effect.includes('reputation') && marketingState.talents.atl.includes(9)) talentBonus += 0.30; // Бренд-менеджмент
-  if (action.effect.includes('reputation') && action.type === 'btl' && marketingState.talents.btl.includes(6)) talentBonus += 0.25; // Мерчандайзинг
-  if (action.effect.includes('satisfaction') && marketingState.talents.btl.includes(4)) talentBonus += 0.20; // Ивенты
+  if (action.effect.includes('followers') && marketingState.talents.digital.includes(2)) talentBonus += 0.25;
+  if (action.effect.includes('reputation') && marketingState.talents.atl.includes(9)) talentBonus += 0.30;
+  if (action.effect.includes('reputation') && action.type === 'btl' && marketingState.talents.btl.includes(6)) talentBonus += 0.25;
+  if (action.effect.includes('satisfaction') && marketingState.talents.btl.includes(4)) talentBonus += 0.20;
 
   effectValue *= talentBonus;
   
@@ -408,7 +422,7 @@ function selectAction(actionId, cost) {
   } else if (action.effect === 'both') {
     marketingState.followers += Math.floor(effectValue * 0.6 * (match / 100));
     marketingState.reputation += Math.floor(effectValue * 0.4 * (match / 100));
-  } else if (action.effect === 'knowledge') { // Новый эффект для "Анализ рынка"
+  } else if (action.effect === 'knowledge') {
     marketingState.skills.analytics = Math.min(5, marketingState.skills.analytics + action.baseValue);
     showNotification(`Навык "Аналитика" улучшен!`, "info");
   }
@@ -416,36 +430,35 @@ function selectAction(actionId, cost) {
   // Удовлетворенность клиента растет от успешных действий
   let clientSatisfactionGain = 0;
   if (match >= 75) {
-      clientSatisfactionGain = 10; // Снижена прибавка
+      clientSatisfactionGain = 10;
   } else if (match >= 50) {
-      clientSatisfactionGain = 5; // Снижена прибавка
+      clientSatisfactionGain = 5;
   } else if (match >= 30) {
-      clientSatisfactionGain = 2; // Снижена прибавка
+      clientSatisfactionGain = 2;
   } else {
-      clientSatisfactionGain = -25; // Увеличен штраф
+      clientSatisfactionGain = -15; // Смягчен штраф
   }
   marketingState.client.satisfaction += clientSatisfactionGain;
 
   // Опыт и уровни
-  let expGain = 12 + Math.floor(match / 6); // Снижен прирост опыта
+  let expGain = 15 + Math.floor(match / 5); // Увеличен прирост опыта
   marketingState.experience += expGain;
   
   while (marketingState.experience >= marketingState.nextLevelExp) {
     marketingState.talentPoints += 1;
     marketingState.experience -= marketingState.nextLevelExp;
-    marketingState.nextLevelExp = Math.round(marketingState.nextLevelExp * 1.7); // Ускорен рост требований к опыту
+    marketingState.nextLevelExp = Math.round(marketingState.nextLevelExp * 1.7);
     showNotification(`Получено очко таланта! Всего: ${marketingState.talentPoints}`, "success");
-    openTalentTree(); // Показываем дерево при получении очка
+    openTalentTree();
   }
   
   // Оплата от клиента
   if (match >= 50) {
-    const paymentMultiplier = 0.7 + (marketingState.client.satisfaction / 100) * 0.6; // От 0.7 до 1.3 в зависимости от удовлетворенности
+    const paymentMultiplier = 0.5 + (marketingState.client.satisfaction / 100) * 0.3;
     let payment = Math.floor(marketingState.client.payment * paymentMultiplier);
 
-    // Бонус от таланта "Performance маркетинг"
     if (marketingState.talents.digital.includes(3)) {
-        payment *= 1.20; // Увеличение на 20%
+        payment *= 1.20;
     }
     marketingState.budget += payment;
     showNotification(`Клиент доволен и оплатил работу: $${Math.floor(payment)}`, "success");
@@ -460,7 +473,7 @@ function selectAction(actionId, cost) {
   marketingState.client.satisfaction = Math.max(0, Math.min(100, marketingState.client.satisfaction));
   
   // Прогресс сюжета
-  const progressIncrease = Math.floor(match / 15); // Прогресс зависит от эффективности, снижен
+  const progressIncrease = Math.floor(match / 15);
   if (marketingState.client.type === 'small') {
     marketingState.storyProgress.smallBusiness = Math.min(100, marketingState.storyProgress.smallBusiness + progressIncrease);
   } else if (marketingState.client.type === 'startup') {
@@ -481,37 +494,27 @@ function selectAction(actionId, cost) {
   updateUI();
 }
 
-/**
- * Получает случайное событие с учетом истории последних событий
- * и текущего дня для корректировки сложности.
- */
 function getWeightedRandomEvent() {
   const allEvents = marketingGameData.events;
   const negativeEvents = allEvents.filter(e => (e.effect === "reputation" && e.value < 0) || e.type === "inflation" || e.type === "crisis" || e.type === "scandal");
   const positiveEvents = allEvents.filter(e => e.effect === "budget" || e.effect === "followers" || e.effect === "skill" || e.type === "boom" || e.type === "viral" || e.type === "investment");
-  const neutralEvents = allEvents.filter(e => e.severity === "low" && e.effect !== "budget" && e.effect !== "followers" && e.effect !== "reputation"); // Events that are skill bonuses
+  const neutralEvents = allEvents.filter(e => e.severity === "low" && e.effect !== "budget" && e.effect !== "followers" && e.effect !== "reputation");
 
   let availableEvents = [...allEvents];
 
-  // Пункт 5: Проверка последовательности эффектов
-  // Если последние 2 события были штрафными, повышаем шанс на нейтральное/позитивное
   const lastTwoNegative = marketingState.lastEvents.length >= 2 &&
                           marketingState.lastEvents.every(e => e.value < 0 || e.type === "inflation" || e.type === "crisis" || e.type === "scandal");
 
   if (lastTwoNegative) {
-    // Временно увеличиваем пул событий, чтобы включить больше позитивных/нейтральных
-    availableEvents = [...positiveEvents, ...neutralEvents, ...positiveEvents]; // Удваиваем позитивные для большего веса
-    showNotification("Последовательность негативных событий. Шанс на позитивное событие увеличен!", "info");
+    availableEvents = [...positiveEvents, ...neutralEvents, ...positiveEvents];
+    showNotification("Последовательность негативных событий. Шанс на позитивное собычение увеличен!", "info");
   }
 
-  // Пункт 7: Корректировка кривой сложности
-  // В начале игры (до 5 дня) исключаем события с высокой "severity"
-  const minDayForHarshEvents = 8; // Увеличено до 8 дня
+  const minDayForHarshEvents = 8;
   if (marketingState.currentDay < minDayForHarshEvents) {
     availableEvents = availableEvents.filter(e => e.severity !== "high");
   }
 
-  // Если после фильтрации нет доступных событий, возвращаем случайное из всех, чтобы избежать ошибок
   if (availableEvents.length === 0) {
     return allEvents[Math.floor(Math.random() * allEvents.length)];
   }
@@ -523,14 +526,15 @@ function getWeightedRandomEvent() {
 function endDay() {
     marketingState.currentDay++;
 
-    // Пункт 6: Проверка условий проигрыша - буферная зона
+    // Проверка условий проигрыша с буферной зоной
     if (marketingState.budget <= 0) {
         if (!marketingState.wasWarnedOnce) {
-            marketingState.budget = 30; // Уменьшен временный буфер
+            marketingState.budget = 50; // Небольшой буфер
+            marketingState.reputation = Math.max(0, marketingState.reputation - 10); // Штраф к репутации
             marketingState.wasWarnedOnce = true;
-            showNotification("Бюджет на исходе! Вам дан небольшой запас, но будьте осторожны!", "error");
+            showNotification("Бюджет на исходе! Вы получили небольшой кредит, но ваша репутация пострадала!", "error");
         } else {
-            completeMarketingGame(false); // Проигрыш
+            completeMarketingGame(false); // Проигрыш при повторном банкротстве
             return;
         }
     }
@@ -542,38 +546,66 @@ function endDay() {
     }
 
     // Пассивный доход от офиса
-    const dailyIncome = marketingGameData.officeLevels[marketingState.officeLevel-1].cost > 0 ? OFFICE_PASSIVE_INCOME[marketingState.officeLevel-1] : 0;
+    const dailyIncome = OFFICE_PASSIVE_INCOME[marketingState.officeLevel-1];
     if (dailyIncome > 0) {
         marketingState.budget += dailyIncome;
         showNotification(`Пассивный доход от офиса: +$${dailyIncome}`, "info");
     }
 
     // Инфляция (раз в 2 дня)
-    if (marketingState.currentDay % 2 === 0) { // Инфляция чаще
-      marketingState.inflation = Math.min(0.7, marketingState.inflation + 0.07); // Увеличена скорость инфляции, максимальная инфляция 70%
+    if (marketingState.currentDay % 2 === 0) {
+      marketingState.inflation = Math.min(0.7, marketingState.inflation + 0.05); // Снижена скорость инфляции
       showEvent({ 
         type: "inflation", 
         text: `Рыночные колебания! Инфляция немного подросла. Текущая инфляция: ${Math.floor(marketingState.inflation*100)}%`,
-        value: marketingState.inflation, // Добавляем value для отслеживания в lastEvents
+        value: marketingState.inflation,
         effect: "inflation"
       });
     }
     
     // Случайное событие
-    if (Math.random() < 0.55) { // Увеличена вероятность события
-      const event = getWeightedRandomEvent(); // Используем новую функцию для выбора события
+    if (Math.random() < 0.55) {
+      const event = getWeightedRandomEvent();
       applyEvent(event);
       showEvent(event);
 
-      // Обновляем историю последних событий
       marketingState.lastEvents.push({ type: event.type, value: event.value });
-      if (marketingState.lastEvents.length > 2) { // Храним только последние 2 события
+      if (marketingState.lastEvents.length > 2) {
         marketingState.lastEvents.shift();
       }
     } else {
-        // Если события не произошло, очищаем историю, чтобы не накапливались "негативные" флаги
         marketingState.lastEvents = [];
     }
+
+    // --- Изменено: Проверка, может ли игрок позволить себе хоть одно действие ---
+    let minCostOfAnyAction = Infinity; 
+
+    for (const action of marketingGameData.marketingActions) {
+        const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1); 
+        let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation) * exponentialMultiplier);
+        
+        // НОВОЕ: Учет множителя использования при расчете минимальной стоимости
+        const usageCount = marketingState.actionUsage[action.id] || 0;
+        const usageMultiplier = 1 + (usageCount * 0.05);
+        actualCost = Math.floor(actualCost * usageMultiplier);
+
+        if (action.communicable) {
+            actualCost = Math.floor(actualCost * (1 - marketingState.skills.communication * 0.05));
+        }
+
+        minCostOfAnyAction = Math.min(minCostOfAnyAction, actualCost);
+    }
+
+    // Отладочное сообщение
+    console.log(`[Marketing Game Debug] День: ${marketingState.currentDay}, Бюджет: $${Math.floor(marketingState.budget)}, Минимальная стоимость действия: $${minCostOfAnyAction}, Может позволить себе действие: ${marketingState.budget >= minCostOfAnyAction}`);
+
+
+    if (marketingState.budget < minCostOfAnyAction) {
+        showNotification("У вас недостаточно средств для выполнения каких-либо действий. Игра окончена!", "error");
+        completeMarketingGame(false); // Проигрыш, если нет доступных действий
+        return;
+    }
+    // --- Конец измененного блока ---
     
     generateClient();
     updateUI();
@@ -610,22 +642,20 @@ function applyEvent(event) {
   marketingState.activeEvent = event;
   
   switch(event.effect) {
-    case "inflation": // Инфляция теперь применяется как прямое значение
-      marketingState.inflation = Math.min(0.7, marketingState.inflation + event.value); // Максимальная инфляция 70%
+    case "inflation":
+      marketingState.inflation = Math.min(0.7, marketingState.inflation + event.value);
       break;
     case "budget":
-      // Пункт 2: Ограничить резкие "провалы" для бюджета
-      if (event.value < 0) { // Если это штраф
-        const maxLoss = marketingState.budget * 0.4; // Увеличен максимальный штраф до 40%
-        event.value = Math.max(event.value, -maxLoss); // Ограничиваем штраф
+      if (event.value < 0) {
+        const maxLoss = marketingState.budget * 0.4;
+        event.value = Math.max(event.value, -maxLoss);
       }
       marketingState.budget += event.value;
       break;
     case "reputation":
-      // Пункт 2: Ограничить резкие "провалы" для репутации
-      if (event.value < 0) { // Если это штраф
-        const maxLoss = marketingState.reputation * 0.4; // Увеличен максимальный штраф до 40%
-        event.value = Math.max(event.value, -maxLoss); // Ограничиваем штраф
+      if (event.value < 0) {
+        const maxLoss = marketingState.reputation * 0.4;
+        event.value = Math.max(event.value, -maxLoss);
       }
       marketingState.reputation = Math.min(100, marketingState.reputation + event.value);
       break;
@@ -674,7 +704,7 @@ function showNotification(text, type = "info") {
 }
 
 function updateUI() {
-    if (!document.querySelector('.day-counter')) return; // Проверяем, активен ли UI игры
+    if (!document.querySelector('.day-counter')) return;
     
     document.querySelector('.day-counter').textContent = `День ${marketingState.currentDay}/${marketingGameData.days}`;
     document.querySelector('.budget').textContent = `$${Math.floor(marketingState.budget)}`;
@@ -754,12 +784,8 @@ function updateUI() {
   renderActions();
 }
 
-/**
- * Завершает игру "Маркетолог".
- * @param {boolean} win - True, если игра завершена победой, false - если проигрышем.
- */
 function completeMarketingGame(win) {
-  gamesCompleted.marketing = true; // Отмечаем игру как завершенную
+  gamesCompleted.marketing = true;
   const marketingGameDiv = document.getElementById('marketingGame');
   if (!marketingGameDiv) return;
 
@@ -775,7 +801,7 @@ function completeMarketingGame(win) {
           <button class="btn" onclick="navButtons.memory.click()">Продолжить</button>
       </div>
     `;
-    showBoxAnimation(1); // Показываем анимацию открытия первой коробки
+    showBoxAnimation(1);
   } else {
     marketingGameDiv.innerHTML = `
       <div class="ending-screen" style="display:block; text-align:center; padding: 40px;">
@@ -787,4 +813,3 @@ function completeMarketingGame(win) {
     `;
   }
 }
-
