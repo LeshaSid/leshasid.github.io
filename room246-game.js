@@ -454,6 +454,11 @@ const room246Game = (() => {
                     <p class="text-gray-600">Успей подшить курсовую до дедлайна!</p>
                 </div>
 
+                <div class="coursework-game-controls-top">
+                    <button id="start-button" class="coursework-stapler-button">Начать игру</button>
+                    <button id="stitch-button" class="coursework-stapler-button" disabled>Подшить!</button>
+                </div>
+
                 <div class="coursework-game-info">
                     <div class="time-left">Время: <span id="timer">02:30</span></div>
                     <div class="pages-count">Собрано: <span id="stapled-count">0</span> / <span id="total-pages">0</span></div>
@@ -465,11 +470,8 @@ const room246Game = (() => {
                     <div id="stapling-panel" class="coursework-stapling-panel">
                         <p class="text-gray-500">Перетащите страницы сюда в правильном порядке</p>
                         </div>
-                    <button id="stitch-button" class="coursework-stapler-button" disabled>Подшить!</button>
                     <p id="thread-tangled-message" class="coursework-stapler-jammed-text hidden">Нить запуталась! Нажми ещё <span id="untangle-clicks-needed"></span> раз(а)!</p>
                 </div>
-
-                <button id="start-button" class="coursework-stapler-button mt-4 mx-auto block">Начать игру</button>
 
                 <div id="professor-popup-overlay" class="coursework-popup-overlay">
                     <div class="coursework-popup-content">
@@ -1416,4 +1418,3 @@ const room246Game = (() => {
     closeDialog
   };
 })();
-

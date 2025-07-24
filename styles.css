@@ -1493,6 +1493,14 @@ kbd {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+.coursework-game-controls-top { /* NEW: Container for top buttons */
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
 .coursework-game-info {
     display: flex;
     justify-content: space-between;
@@ -1618,7 +1626,7 @@ kbd {
     transition: all 0.3s ease; /* Smooth transition for all properties */
     box-shadow: 0 6px 15px rgba(52, 211, 153, 0.5); /* Stronger shadow */
     border: none;
-    margin-top: 20px;
+    /* margin-top: 20px; Removed as it's now in a flex container */
     position: relative;
     overflow: hidden;
 }
@@ -1866,6 +1874,11 @@ kbd {
 
     .coursework-game-title {
         font-size: 2rem;
+    }
+
+    .coursework-game-controls-top { /* NEW: Mobile adjustments for top buttons */
+        flex-direction: column;
+        gap: 10px;
     }
 
     .coursework-game-info {
@@ -2218,4 +2231,3 @@ kbd {
 .welcome-content .text-background p {
   margin: 5px 0; /* Adjust spacing for paragraphs inside */
 }
-

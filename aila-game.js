@@ -164,8 +164,6 @@ function initAilaGame() {
   renderInventory();
 }
 
-// ... остальной код aila-game.js без изменений ...
-
 // Основная функция выбора
 function makeChoice(choice) {
   switch(gameState.chapter) {
@@ -828,7 +826,6 @@ function battleChoice(choice) {
     }
     
     if (enemyRoll > 0) {
-      gameState.health -= enemyRoll;
       addToStory(`Ты защищаетешься и получаешь ${enemyRoll} урона (вместо ${enemyRoll + 2})`, false);
     } else {
       addToStory("Ты полностью заблокировала атаку!", false);
@@ -849,7 +846,10 @@ function battleChoice(choice) {
   if (gameState.health <= 0) {
     battleLog.textContent = "Ты погибла! Игра начнется заново.";
     setTimeout(() => {
+      // Reset game state and re-initialize the game UI
       resetAilaGame();
+      initAilaGame(); // Re-initialize the game UI
+      changeChapter('prologue'); // Go back to the prologue
     }, 3000);
     return;
   }
@@ -863,11 +863,14 @@ function battleChoice(choice) {
 function resetAilaGame() {
   // Сброс состояния игры
   gameState.health = 8;
+  gameState.maxHealth = 12; // Убедимся, что maxHealth тоже сбрасывается
   gameState.energy = 5;
+  gameState.maxEnergy = 10; // Убедимся, что maxEnergy тоже сбрасывается
   gameState.coins = 3;
   gameState.food = 2;
   gameState.knowledge = 0;
   gameState.strength = 2;
+  gameState.storyFlags = {}; // Сброс флагов истории
   gameState.inventory = [];
   gameState.companions = [];
   gameState.cards = {
@@ -956,6 +959,8 @@ function endBattle(victory) {
       document.querySelector(`#${gameState.chapter}`).classList.add('active');
     }
   } else {
+    // If not victorious, and not a game over, return to the current chapter's screen.
+    // The game over condition is handled separately in battleChoice.
     document.querySelector(`#${gameState.chapter}`).classList.add('active');
   }
   
