@@ -1,5 +1,7 @@
 // marketing-game.js
-let marketingState = {
+
+// Начальное состояние игры (вынесено для предотвращения дублирования)
+const INITIAL_MARKETING_STATE = {
   currentDay: 1,
   budget: 750, // Снижен стартовый бюджет для повышения сложности
   reputation: 30, // Снижена стартовая репутация
@@ -34,50 +36,21 @@ let marketingState = {
   actionUsage: {} // НОВОЕ: Объект для отслеживания использования каждого действия
 };
 
+// Текущее состояние игры
+let marketingState = { ...INITIAL_MARKETING_STATE
+};
+
 // Пассивный доход от офиса (увеличен, чтобы сделать улучшение более ценным)
 const OFFICE_PASSIVE_INCOME = [0, 25, 60, 120];
 
 function startMarketingGame() {
-  // Сброс состояния игры к начальным параметрам
-  marketingState = {
-    currentDay: 1,
-    budget: 750,
-    reputation: 30,
-    followers: 35,
-    satisfaction: 45,
-    inflation: 0,
-    skills: {
-      creativity: 1,
-      analytics: 1,
-      communication: 1
-    },
-    officeLevel: 1,
-    careerLevel: 1,
-    client: null,
-    history: [],
-    activeEvent: null,
-    storyProgress: {
-      smallBusiness: 0,
-      startup: 0,
-      corporate: 0
-    },
-    talents: {
-      digital: [],
-      btl: [],
-      atl: []
-    },
-    talentPoints: 0,
-    experience: 0,
-    nextLevelExp: 70,
-    wasWarnedOnce: false,
-    lastEvents: [],
-    actionUsage: {} // НОВОЕ: Сброс использования действий при старте новой игры
-  };
-  
+  // Сброс состояния игры к начальным параметрам путем создания глубокой копии
+  marketingState = JSON.parse(JSON.stringify(INITIAL_MARKETING_STATE));
+
   renderMarketingUI();
   generateClient();
   renderActions();
-  updateUI();
+  updateUI(); // Добавлен вызов updateUI() для корректного отображения начального состояния
 }
 
 function renderMarketingUI() {
@@ -91,7 +64,7 @@ function renderMarketingUI() {
           <div class="resource reputation">⭐${marketingState.reputation}</div>
           <div class="resource followers">👥${marketingState.followers}</div>
           <div class="resource satisfaction">😊${marketingState.satisfaction}</div>
-          <div class="resource experience">📊${marketingState.experience}/${marketingState.nextLevelExp}</div>
+          <div class="resource experience">�${marketingState.experience}/${marketingState.nextLevelExp}</div>
           <div class="resource talent">🎯${marketingState.talentPoints}</div>
         </div>
       </div>
@@ -103,8 +76,8 @@ function renderMarketingUI() {
             <h3>${marketingState.client?.name || 'Клиент'}</h3>
             <p>${marketingState.client?.description || 'Выберите действие'}</p>
             <div class="client-type ${marketingState.client?.type || ''}">
-              ${marketingState.client?.type === 'small' ? '🏪 Малый бизнес' : 
-                marketingState.client?.type === 'startup' ? '🚀 Стартап' : 
+              ${marketingState.client?.type === 'small' ? '🏪 Малый бизнес' :
+                marketingState.client?.type === 'startup' ? '🚀 Стартап' :
                 '🏢 Корпорация'}
             </div>
           </div>
@@ -169,8 +142,8 @@ function renderMarketingUI() {
           <h3>${marketingGameData.officeLevels[marketingState.officeLevel-1].name}</h3>
           <p>${marketingGameData.officeLevels[marketingState.officeLevel-1].description}</p>
           <div id="officeUpgradeButtonContainer">
-            ${marketingState.officeLevel < 3 ? 
-              `<button class="btn" onclick="upgradeOffice()">Улучшить ($${marketingGameData.officeLevels[marketingState.officeLevel].cost})</button>` : 
+            ${marketingState.officeLevel < 3 ?
+              `<button class="btn" onclick="upgradeOffice()">Улучшить ($${marketingGameData.officeLevels[marketingState.officeLevel].cost})</button>` :
               '<div class="max-level">Максимальный уровень</div>'}
           </div>
         </div>
@@ -219,12 +192,12 @@ function renderTalentBranch(branch) {
                marketingState.talents.btl.includes(reqId) ||
                marketingState.talents.atl.includes(reqId);
     });
-    const canPurchase = !isPurchased && 
+    const canPurchase = !isPurchased &&
       marketingState.talentPoints >= talent.cost &&
       requiresPurchased;
     
     html += `
-      <div class="talent ${isPurchased ? 'purchased' : ''} ${!requiresPurchased ? 'locked' : ''} ${canPurchase ? 'can-purchase' : ''}" 
+      <div class="talent ${isPurchased ? 'purchased' : ''} ${!requiresPurchased ? 'locked' : ''} ${canPurchase ? 'can-purchase' : ''}"
            onclick="${canPurchase ? `purchaseTalent('${branch}', ${talent.id})` : ''}"
            title="${talent.effect}">
         <div class="talent-icon">${isPurchased ? '✓' : talent.cost}</div>
@@ -267,7 +240,7 @@ function purchaseTalent(branch, talentId) {
   
   if (talent && marketingState.talentPoints >= talent.cost && !marketingState.talents[branch].includes(talentId)) {
     // Проверка зависимостей талантов
-    const requiresPurchased = talent.requires.length === 0 || talent.requires.every(reqId => 
+    const requiresPurchased = talent.requires.length === 0 || talent.requires.every(reqId =>
         marketingState.talents.digital.includes(reqId) ||
         marketingState.talents.btl.includes(reqId) ||
         marketingState.talents.atl.includes(reqId)
@@ -284,7 +257,7 @@ function purchaseTalent(branch, talentId) {
     // Обновляем UI после покупки
     openTalentTree(); // Перерисовываем модальное окно, чтобы обновить все состояния
     document.getElementById('talentPoints').textContent = marketingState.talentPoints; // Обновляем счетчик очков
-    document.querySelector('.talent-tree-section p').textContent = 
+    document.querySelector('.talent-tree-section p').textContent =
       `Активные таланты: ${marketingState.talents.digital.length + marketingState.talents.btl.length + marketingState.talents.atl.length}`;
     
     showNotification(`Приобретен талант: ${talent.name}`, "success");
@@ -302,7 +275,7 @@ function generateClient() {
   ]};
   
   // Выбираем запрос, который соответствует типу клиента
-  let availableRequests = marketingGameData.clientRequests.filter(request => 
+  let availableRequests = marketingGameData.clientRequests.filter(request =>
     request.keywords.some(keyword => client.preferences.includes(keyword))
   );
 
@@ -329,7 +302,7 @@ function renderActions() {
   marketingGameData.marketingActions.forEach(action => {
     // Множитель, который зависит от текущего дня, чтобы увеличить стоимость действий по ходу игры.
     // Используем Math.pow для экспоненциального роста. База 1.1 означает 10% рост за день.
-    const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1); 
+    const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1);
     
     let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation) * exponentialMultiplier);
     
@@ -507,7 +480,7 @@ function getWeightedRandomEvent() {
 
   if (lastTwoNegative) {
     availableEvents = [...positiveEvents, ...neutralEvents, ...positiveEvents];
-    showNotification("Последовательность негативных событий. Шанс на позитивное собычение увеличен!", "info");
+    showNotification("Последовательность негативных событий. Шанс на позитивное событие увеличен!", "info");
   }
 
   const minDayForHarshEvents = 8;
@@ -555,8 +528,8 @@ function endDay() {
     // Инфляция (раз в 2 дня)
     if (marketingState.currentDay % 2 === 0) {
       marketingState.inflation = Math.min(0.7, marketingState.inflation + 0.05); // Снижена скорость инфляции
-      showEvent({ 
-        type: "inflation", 
+      showEvent({
+        type: "inflation",
         text: `Рыночные колебания! Инфляция немного подросла. Текущая инфляция: ${Math.floor(marketingState.inflation*100)}%`,
         value: marketingState.inflation,
         effect: "inflation"
@@ -578,10 +551,10 @@ function endDay() {
     }
 
     // --- Изменено: Проверка, может ли игрок позволить себе хоть одно действие ---
-    let minCostOfAnyAction = Infinity; 
+    let minCostOfAnyAction = Infinity;
 
     for (const action of marketingGameData.marketingActions) {
-        const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1); 
+        const exponentialMultiplier = Math.pow(1.1, marketingState.currentDay - 1);
         let actualCost = Math.floor(action.baseCost * (1 + marketingState.inflation) * exponentialMultiplier);
         
         // НОВОЕ: Учет множителя использования при расчете минимальной стоимости
@@ -616,8 +589,8 @@ function checkCareerProgress() {
   const currentLevel = marketingGameData.careerLevels[marketingState.careerLevel-1];
   const nextLevel = marketingGameData.careerLevels[marketingState.careerLevel];
   
-  if (nextLevel && 
-      marketingState.reputation >= nextLevel.requirements.reputation && 
+  if (nextLevel &&
+      marketingState.reputation >= nextLevel.requirements.reputation &&
       marketingState.followers >= nextLevel.requirements.followers) {
     marketingState.careerLevel++;
     showNotification(`Поздравляем! Вы получили повышение до ${nextLevel.name}`, "success");
@@ -723,8 +696,8 @@ function updateUI() {
       const typeElement = document.querySelector('.client-type');
       if (typeElement) {
         typeElement.className = `client-type ${marketingState.client.type}`;
-        typeElement.textContent = 
-          marketingState.client.type === 'small' ? '🏪 Малый бизнес' : 
+        typeElement.textContent =
+          marketingState.client.type === 'small' ? '🏪 Малый бизнес' :
           marketingState.client.type === 'startup' ? '🚀 Стартап' : '🏢 Корпорация';
       }
       

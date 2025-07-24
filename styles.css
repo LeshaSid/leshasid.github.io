@@ -254,6 +254,15 @@ nav button.active {
   color: #fff;
   text-shadow: 0 0 5px #fff, 0 0 10px #ffcc33, 0 0 20px #ffaa00;
   margin: 25px 0;
+  /* Добавленные стили для .final-message */
+  padding: 10px 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 2px solid #ffcc33;
+  box-shadow: 0 0 15px rgba(255, 204, 51, 0.5);
+  max-width: 80%; /* Ограничение ширины для лучшего вида */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Стили для игры в память (Simon) */
@@ -1726,7 +1735,7 @@ kbd {
     background-color: #ef4444;
     color: white;
     padding: 12px 25px; /* Larger padding */
-    border-radius: 10px; /* More rounded */
+    border-radius: 10px;
     font-size: 1.1rem; /* Larger font */
     cursor: pointer;
     border: none;

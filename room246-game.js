@@ -68,7 +68,16 @@ const room246Game = (() => {
     }
   };
 
-  let gameState = {};
+  // Инициализация gameState с начальными значениями
+  let gameState = {
+    currentState: "room",
+    inventory: ['coursework_sheets'], // Игрок начинает с листами для курсовой
+    flags: { laptop_unlocked: false, note_read: false, wardrobe_unlocked: false },
+    startTime: Date.now(),
+    timeLimit: 10 * 60 * 1000, // 10 minutes
+    timerId: null,
+    ending: false
+  };
   
   // Variables for the Lockpicking Minigame
   let lockpickGame = {
@@ -128,8 +137,9 @@ const room246Game = (() => {
 
   function initRoom246Game() {
     const room246Screen = document.getElementById('room246Game');
-    if (!room246Screen || room246Screen.querySelector('.game-container')) return;
+    if (!room246Screen) return;
     
+    // Сброс gameState к начальным значениям при каждом новом запуске
     gameState = {
       currentState: "room",
       inventory: ['coursework_sheets'], // Игрок начинает с листами для курсовой
@@ -139,6 +149,14 @@ const room246Game = (() => {
       timerId: null,
       ending: false
     };
+
+    // Проверяем, был ли уже инициализирован контейнер игры, чтобы избежать дублирования
+    if (room246Screen.querySelector('.game-container')) {
+        // Если контейнер уже есть, просто перерисовываем состояние и запускаем таймер
+        renderState();
+        startTimer();
+        return;
+    }
     
     room246Screen.innerHTML = `
       <div class="game-container" id="room246Container">
@@ -1410,6 +1428,15 @@ const room246Game = (() => {
     cleanupLockpickingGame();
     cleanupCourseworkGame();
   }
+
+  // Добавляем слушатель DOMContentLoaded для инициализации игры при загрузке страницы,
+  // если экран "Комната 246" активен.
+  document.addEventListener('DOMContentLoaded', () => {
+    const room246Screen = document.getElementById('room246Game');
+    if (room246Screen && room246Screen.classList.contains('active')) {
+      initRoom246Game();
+    }
+  });
   
   return {
     initRoom246Game,

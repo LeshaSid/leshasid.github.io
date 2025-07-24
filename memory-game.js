@@ -11,7 +11,7 @@ let userSequence = [];
 let memoryLevel = 1;
 let isPlayingSequence = false;
 let canClick = false;
-let maxLevel = 5;
+let maxLevel; // Removed hardcoded value, will be set dynamically
 
 function createMemoryGrid() {
   const memoryGameGrid = document.getElementById('memoryGameGrid');
@@ -153,7 +153,7 @@ function resetMemoryGame() {
   userSequence = [];
   memoryLevel = 1;
   const difficulty = document.getElementById('memoryDifficulty').value;
-  maxLevel = DIFFICULTY_LEVELS[difficulty].levels;
+  maxLevel = DIFFICULTY_LEVELS[difficulty].levels; // Set maxLevel based on selected difficulty
   
   const memoryFeedback = document.getElementById('memoryFeedback');
   const memoryStartBtn = document.getElementById('memoryStartBtn');
@@ -185,6 +185,7 @@ document.getElementById('memoryGame').innerHTML = `
 
 // Инициализация игры при загрузке
 createMemoryGrid();
+resetMemoryGame(); // Call reset to set initial maxLevel based on default difficulty
 
 const memoryStartBtn = document.getElementById('memoryStartBtn');
 if (memoryStartBtn) {
@@ -197,4 +198,10 @@ if (memoryStartBtn) {
     }
     startMemoryRound();
   });
+}
+
+// Add event listener for difficulty change
+const memoryDifficultySelect = document.getElementById('memoryDifficulty');
+if (memoryDifficultySelect) {
+  memoryDifficultySelect.addEventListener('change', resetMemoryGame);
 }

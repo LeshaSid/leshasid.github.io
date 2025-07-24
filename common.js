@@ -35,7 +35,7 @@ function startGames() {
       document.querySelector('meta[name="viewport"]').content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     }
     
-    initNavigation();
+    // initNavigation() is now called once on DOMContentLoaded, so no need to call it here again
     
     // Automatically click the first game's navigation button
     if (navButtons && navButtons.marketing) {
@@ -154,6 +154,9 @@ function closeFinalAnimation() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize navigation buttons and screens first
+  initNavigation(); 
+
   const startButton = document.querySelector('#welcomeScreen .btn');
   if (startButton) {
       startButton.onclick = startGames;
@@ -168,6 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Case-insensitive jQuery :contains utility
-jQuery.expr[':'].contains = function(a, i, m) {
-  return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
-};
+// Ensure jQuery is defined before extending it
+if (typeof jQuery !== 'undefined') {
+  jQuery.expr[':'].contains = function(a, i, m) {
+    return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+  };
+} else {
+  console.warn("jQuery is not loaded, :contains utility will not be available.");
+}
